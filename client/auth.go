@@ -123,7 +123,7 @@ func (c *Client) Logout() error {
 	c.mu.Lock()
 	c.state = imap.ConnStateLogout
 	c.mu.Unlock()
-	c.Close()
+	_ = c.Close()
 	return err
 }
 

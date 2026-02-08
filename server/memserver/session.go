@@ -57,10 +57,7 @@ func (s *Session) Select(mailbox string, options *imap.SelectOptions) (*imap.Sel
 		return nil, ErrNoSuchMailbox
 	}
 
-	readOnly := false
-	if options != nil && options.ReadOnly {
-		readOnly = true
-	}
+	readOnly := options != nil && options.ReadOnly
 
 	mbox.mu.Lock()
 	defer mbox.mu.Unlock()

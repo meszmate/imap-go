@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	fmt.Printf("Connected to %s\n", addr)
 	fmt.Printf("Capabilities: %v\n", c.Caps())

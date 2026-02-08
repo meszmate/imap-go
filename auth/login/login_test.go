@@ -64,8 +64,12 @@ func TestClientMechanismNextStep2ReturnsError(t *testing.T) {
 	m := &ClientMechanism{Username: "testuser", Password: "testpass"}
 
 	// Step 0 and 1
-	m.Next([]byte("Username:"))
-	m.Next([]byte("Password:"))
+	if _, err := m.Next([]byte("Username:")); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
+	if _, err := m.Next([]byte("Password:")); err != nil {
+		t.Fatalf("step 1: unexpected error: %v", err)
+	}
 
 	// Step 2: unexpected
 	_, err := m.Next([]byte("Extra:"))
@@ -147,7 +151,9 @@ func TestServerMechanismStep1SendsPasswordChallenge(t *testing.T) {
 	m := NewServerMechanism(authenticator)
 
 	// Step 0: get Username: challenge
-	m.Next(nil)
+	if _, _, err := m.Next(nil); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
 
 	// Step 1: send username, get Password: challenge
 	challenge, done, err := m.Next([]byte("testuser"))
@@ -175,9 +181,13 @@ func TestServerMechanismStep2AuthenticatesSuccess(t *testing.T) {
 	m := NewServerMechanism(authenticator)
 
 	// Step 0
-	m.Next(nil)
+	if _, _, err := m.Next(nil); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
 	// Step 1
-	m.Next([]byte("testuser"))
+	if _, _, err := m.Next([]byte("testuser")); err != nil {
+		t.Fatalf("step 1: unexpected error: %v", err)
+	}
 	// Step 2: send password
 	challenge, done, err := m.Next([]byte("testpass"))
 
@@ -208,8 +218,12 @@ func TestServerMechanismStep2AuthenticatesFailure(t *testing.T) {
 	})
 	m := NewServerMechanism(authenticator)
 
-	m.Next(nil)
-	m.Next([]byte("testuser"))
+	if _, _, err := m.Next(nil); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
+	if _, _, err := m.Next([]byte("testuser")); err != nil {
+		t.Fatalf("step 1: unexpected error: %v", err)
+	}
 	_, done, err := m.Next([]byte("wrongpass"))
 
 	if err == nil {
@@ -229,9 +243,15 @@ func TestServerMechanismStep3ReturnsError(t *testing.T) {
 	})
 	m := NewServerMechanism(authenticator)
 
-	m.Next(nil)                  // step 0
-	m.Next([]byte("testuser"))   // step 1
-	m.Next([]byte("testpass"))   // step 2
+	if _, _, err := m.Next(nil); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
+	if _, _, err := m.Next([]byte("testuser")); err != nil {
+		t.Fatalf("step 1: unexpected error: %v", err)
+	}
+	if _, _, err := m.Next([]byte("testpass")); err != nil {
+		t.Fatalf("step 2: unexpected error: %v", err)
+	}
 
 	// Step 3: unexpected
 	_, done, err := m.Next([]byte("extra"))

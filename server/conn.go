@@ -236,7 +236,7 @@ func (c *Conn) UpgradeTLS(config *tls.Config) error {
 
 // serve is the main connection loop.
 func (c *Conn) serve() {
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	c.writeGreeting()
 

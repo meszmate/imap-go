@@ -117,7 +117,7 @@ func (srv *Server) Serve(l net.Listener) error {
 
 		if srv.options.MaxConnections > 0 && int(srv.connCount.Load()) >= srv.options.MaxConnections {
 			srv.options.Logger.Warn("max connections reached, rejecting", "remote", conn.RemoteAddr())
-			conn.Close()
+			_ = conn.Close()
 			continue
 		}
 
@@ -158,7 +158,7 @@ func (srv *Server) Shutdown(ctx context.Context) error {
 
 	// Close all listeners
 	for _, l := range srv.listeners {
-		l.Close()
+		_ = l.Close()
 	}
 	srv.mu.Unlock()
 
@@ -166,7 +166,7 @@ func (srv *Server) Shutdown(ctx context.Context) error {
 	srv.mu.Lock()
 	for c := range srv.conns {
 		c.WriteBYE("server shutting down")
-		c.Close()
+		_ = c.Close()
 	}
 	srv.mu.Unlock()
 
@@ -206,7 +206,7 @@ func (srv *Server) handleConn(netConn net.Conn) {
 		delete(srv.conns, c)
 		srv.mu.Unlock()
 		srv.connCount.Add(-1)
-		c.Close()
+		_ = c.Close()
 	}()
 
 	// Create session

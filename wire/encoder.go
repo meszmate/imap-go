@@ -258,7 +258,7 @@ func (e *Encoder) ResponseCode(code string, args ...interface{}) *Encoder {
 	_, _ = e.w.WriteString(code)
 	for _, arg := range args {
 		_ = e.w.WriteByte(' ')
-		fmt.Fprint(e.w, arg)
+		_, _ = fmt.Fprint(e.w, arg)
 	}
 	_, _ = e.w.WriteString("] ")
 	return e

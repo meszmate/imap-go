@@ -240,12 +240,6 @@ func (c *Client) handleContinuation(line string) {
 	}
 }
 
-// writeRaw writes raw bytes to the connection.
-func (c *Client) writeRaw(data []byte) error {
-	_, err := c.conn.Write(data)
-	return err
-}
-
 // Writer returns the underlying encoder for advanced use.
 func (c *Client) Writer() io.Writer {
 	return c.conn

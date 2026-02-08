@@ -152,7 +152,7 @@ func TestServerMechanismStep0SendsChallenge(t *testing.T) {
 	if done {
 		t.Error("expected done to be false at step 0")
 	}
-	if challenge == nil || len(challenge) == 0 {
+	if len(challenge) == 0 {
 		t.Error("expected non-empty challenge")
 	}
 	// Challenge format should be <...@localhost>
@@ -175,7 +175,9 @@ func TestServerMechanismStep1Success(t *testing.T) {
 	m := NewServerMechanism(authenticator)
 
 	// Step 0: get challenge
-	m.Next(nil)
+	if _, _, err := m.Next(nil); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
 
 	// Step 1: send "username digest"
 	response := []byte("testuser abc123def456")
@@ -204,7 +206,9 @@ func TestServerMechanismStep1AuthFailure(t *testing.T) {
 	})
 	m := NewServerMechanism(authenticator)
 
-	m.Next(nil) // step 0
+	if _, _, err := m.Next(nil); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
 
 	response := []byte("testuser baddigest")
 	_, done, err := m.Next(response)
@@ -225,7 +229,9 @@ func TestServerMechanismStep1InvalidFormat(t *testing.T) {
 	})
 	m := NewServerMechanism(authenticator)
 
-	m.Next(nil) // step 0
+	if _, _, err := m.Next(nil); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
 
 	// No space separator
 	_, done, err := m.Next([]byte("nospacehere"))
@@ -246,8 +252,12 @@ func TestServerMechanismStep2ReturnsError(t *testing.T) {
 	})
 	m := NewServerMechanism(authenticator)
 
-	m.Next(nil)                             // step 0
-	m.Next([]byte("user digest"))           // step 1
+	if _, _, err := m.Next(nil); err != nil {
+		t.Fatalf("step 0: unexpected error: %v", err)
+	}
+	if _, _, err := m.Next([]byte("user digest")); err != nil {
+		t.Fatalf("step 1: unexpected error: %v", err)
+	}
 
 	_, done, err := m.Next([]byte("extra")) // step 2: no space => invalid format
 	if err == nil {

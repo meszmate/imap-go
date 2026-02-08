@@ -35,7 +35,7 @@ func NewHarness(t *testing.T, srv *server.Server) *Harness {
 
 	go func() {
 		defer close(h.done)
-		srv.Serve(l)
+		_ = srv.Serve(l)
 	}()
 
 	t.Cleanup(func() {
@@ -60,7 +60,7 @@ func (h *Harness) Dial(opts ...client.Option) *client.Client {
 	}
 
 	h.t.Cleanup(func() {
-		c.Close()
+		_ = c.Close()
 	})
 
 	return c
@@ -68,7 +68,7 @@ func (h *Harness) Dial(opts ...client.Option) *client.Client {
 
 // Close shuts down the test harness.
 func (h *Harness) Close() {
-	h.server.Close()
+	_ = h.server.Close()
 	<-h.done
 }
 

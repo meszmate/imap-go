@@ -267,17 +267,17 @@ func TestLiteralWriterRemaining(t *testing.T) {
 		t.Errorf("initial Remaining() = %d, want 10", lw.Remaining())
 	}
 
-	lw.Write([]byte("abc"))
+	_, _ = lw.Write([]byte("abc"))
 	if lw.Remaining() != 7 {
 		t.Errorf("after 3 bytes Remaining() = %d, want 7", lw.Remaining())
 	}
 
-	lw.Write([]byte("defgh"))
+	_, _ = lw.Write([]byte("defgh"))
 	if lw.Remaining() != 2 {
 		t.Errorf("after 8 bytes Remaining() = %d, want 2", lw.Remaining())
 	}
 
-	lw.Write([]byte("ij"))
+	_, _ = lw.Write([]byte("ij"))
 	if lw.Remaining() != 0 {
 		t.Errorf("after 10 bytes Remaining() = %d, want 0", lw.Remaining())
 	}
@@ -291,12 +291,12 @@ func TestLiteralWriterDone(t *testing.T) {
 		t.Error("Done() should be false before any writes")
 	}
 
-	lw.Write([]byte("ab"))
+	_, _ = lw.Write([]byte("ab"))
 	if lw.Done() {
 		t.Error("Done() should be false after partial write")
 	}
 
-	lw.Write([]byte("c"))
+	_, _ = lw.Write([]byte("c"))
 	if !lw.Done() {
 		t.Error("Done() should be true after writing all bytes")
 	}

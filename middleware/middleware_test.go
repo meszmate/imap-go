@@ -25,8 +25,8 @@ func newTestContext(name string) (*server.CommandContext, func()) {
 	}
 
 	cleanup := func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	}
 
 	return ctx, cleanup

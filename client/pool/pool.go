@@ -51,7 +51,7 @@ func (p *Pool) Put(c *client.Client) {
 	defer p.mu.Unlock()
 
 	if p.closed || len(p.clients) >= p.maxSize {
-		c.Close()
+		_ = c.Close()
 		return
 	}
 
@@ -65,7 +65,7 @@ func (p *Pool) Close() error {
 
 	p.closed = true
 	for _, c := range p.clients {
-		c.Close()
+		_ = c.Close()
 	}
 	p.clients = nil
 	return nil

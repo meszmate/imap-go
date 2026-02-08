@@ -129,10 +129,7 @@ func TestIMAPError_ImplementsError(t *testing.T) {
 
 func TestErrNo(t *testing.T) {
 	err := ErrNo("mailbox not found")
-
-	// Check it is an error
-	var e error = err
-	if e == nil {
+	if err == nil {
 		t.Fatal("ErrNo should return a non-nil error")
 	}
 
@@ -142,14 +139,14 @@ func TestErrNo(t *testing.T) {
 	}
 
 	// Check the underlying StatusResponse
-	if err.StatusResponse.Type != StatusResponseTypeNO {
-		t.Errorf("Type = %q, want %q", err.StatusResponse.Type, StatusResponseTypeNO)
+	if err.Type != StatusResponseTypeNO {
+		t.Errorf("Type = %q, want %q", err.Type, StatusResponseTypeNO)
 	}
-	if err.StatusResponse.Text != "mailbox not found" {
-		t.Errorf("Text = %q, want %q", err.StatusResponse.Text, "mailbox not found")
+	if err.Text != "mailbox not found" {
+		t.Errorf("Text = %q, want %q", err.Text, "mailbox not found")
 	}
-	if err.StatusResponse.Code != "" {
-		t.Errorf("Code = %q, want empty", err.StatusResponse.Code)
+	if err.Code != "" {
+		t.Errorf("Code = %q, want empty", err.Code)
 	}
 }
 
@@ -161,14 +158,14 @@ func TestErrNoWithCode(t *testing.T) {
 		t.Errorf("ErrNoWithCode.Error() = %q, want %q", got, want)
 	}
 
-	if err.StatusResponse.Type != StatusResponseTypeNO {
-		t.Errorf("Type = %q, want %q", err.StatusResponse.Type, StatusResponseTypeNO)
+	if err.Type != StatusResponseTypeNO {
+		t.Errorf("Type = %q, want %q", err.Type, StatusResponseTypeNO)
 	}
-	if err.StatusResponse.Code != ResponseCodeNonExistent {
-		t.Errorf("Code = %q, want %q", err.StatusResponse.Code, ResponseCodeNonExistent)
+	if err.Code != ResponseCodeNonExistent {
+		t.Errorf("Code = %q, want %q", err.Code, ResponseCodeNonExistent)
 	}
-	if err.StatusResponse.Text != "mailbox does not exist" {
-		t.Errorf("Text = %q, want %q", err.StatusResponse.Text, "mailbox does not exist")
+	if err.Text != "mailbox does not exist" {
+		t.Errorf("Text = %q, want %q", err.Text, "mailbox does not exist")
 	}
 }
 
@@ -180,14 +177,14 @@ func TestErrBad(t *testing.T) {
 		t.Errorf("ErrBad.Error() = %q, want %q", got, want)
 	}
 
-	if err.StatusResponse.Type != StatusResponseTypeBAD {
-		t.Errorf("Type = %q, want %q", err.StatusResponse.Type, StatusResponseTypeBAD)
+	if err.Type != StatusResponseTypeBAD {
+		t.Errorf("Type = %q, want %q", err.Type, StatusResponseTypeBAD)
 	}
-	if err.StatusResponse.Text != "syntax error" {
-		t.Errorf("Text = %q, want %q", err.StatusResponse.Text, "syntax error")
+	if err.Text != "syntax error" {
+		t.Errorf("Text = %q, want %q", err.Text, "syntax error")
 	}
-	if err.StatusResponse.Code != "" {
-		t.Errorf("Code = %q, want empty", err.StatusResponse.Code)
+	if err.Code != "" {
+		t.Errorf("Code = %q, want empty", err.Code)
 	}
 }
 
@@ -199,11 +196,11 @@ func TestErrBye(t *testing.T) {
 		t.Errorf("ErrBye.Error() = %q, want %q", got, want)
 	}
 
-	if err.StatusResponse.Type != StatusResponseTypeBYE {
-		t.Errorf("Type = %q, want %q", err.StatusResponse.Type, StatusResponseTypeBYE)
+	if err.Type != StatusResponseTypeBYE {
+		t.Errorf("Type = %q, want %q", err.Type, StatusResponseTypeBYE)
 	}
-	if err.StatusResponse.Text != "server shutting down" {
-		t.Errorf("Text = %q, want %q", err.StatusResponse.Text, "server shutting down")
+	if err.Text != "server shutting down" {
+		t.Errorf("Text = %q, want %q", err.Text, "server shutting down")
 	}
 }
 
@@ -295,8 +292,8 @@ func TestIMAPError_TypeAssertion(t *testing.T) {
 	if !ok {
 		t.Fatal("should be able to type-assert to *IMAPError")
 	}
-	if imapErr.StatusResponse.Type != StatusResponseTypeNO {
-		t.Errorf("Type = %q, want NO", imapErr.StatusResponse.Type)
+	if imapErr.Type != StatusResponseTypeNO {
+		t.Errorf("Type = %q, want NO", imapErr.Type)
 	}
 }
 

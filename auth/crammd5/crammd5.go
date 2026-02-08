@@ -2,6 +2,7 @@
 package crammd5
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/md5"
 	"encoding/hex"
@@ -70,7 +71,7 @@ func (m *ServerMechanism) Next(response []byte) ([]byte, bool, error) {
 		}
 		// Pass the challenge and response to the authenticator
 		// The authenticator needs to know the password to verify
-		err := m.auth.Authenticate(nil, Name, parts[0], response)
+		err := m.auth.Authenticate(context.Background(), Name, parts[0], response)
 		return nil, true, err
 	default:
 		return nil, true, fmt.Errorf("cram-md5: unexpected response")
