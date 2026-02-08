@@ -1,0 +1,28 @@
+package contextsearch
+
+import (
+	imap "github.com/meszmate/imap-go"
+	"github.com/meszmate/imap-go/extension"
+)
+
+// Extension implements the CONTEXT=SEARCH IMAP extension (RFC 5267).
+type Extension struct {
+	extension.BaseExtension
+}
+
+var _ extension.ServerExtension = (*Extension)(nil)
+
+// New creates a new CONTEXT=SEARCH extension.
+func New() *Extension {
+	return &Extension{
+		BaseExtension: extension.BaseExtension{
+			ExtName:         "CONTEXT=SEARCH",
+			ExtCapabilities: []imap.Cap{imap.CapContextSearch},
+		},
+	}
+}
+
+func (e *Extension) CommandHandlers() map[string]interface{} { return nil }
+func (e *Extension) WrapHandler(name string, handler interface{}) interface{} { return nil }
+func (e *Extension) SessionExtension() interface{} { return nil }
+func (e *Extension) OnEnabled(connID string) error { return nil }
