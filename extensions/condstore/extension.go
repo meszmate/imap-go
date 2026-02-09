@@ -263,7 +263,7 @@ func handleCondstoreFetch(ctx *server.CommandContext, _ server.CommandHandlerFun
 	}
 
 	// Parse fetch items
-	options, err := parseFetchItems(dec)
+	options, err := ParseFetchItems(dec)
 	if err != nil {
 		return imap.ErrBad("invalid fetch items: " + err.Error())
 	}
@@ -311,8 +311,8 @@ func handleCondstoreFetch(ctx *server.CommandContext, _ server.CommandHandlerFun
 	return nil
 }
 
-// parseFetchItems parses FETCH item specifications.
-func parseFetchItems(dec *wire.Decoder) (*imap.FetchOptions, error) {
+// ParseFetchItems parses FETCH item specifications.
+func ParseFetchItems(dec *wire.Decoder) (*imap.FetchOptions, error) {
 	options := &imap.FetchOptions{}
 
 	b, err := dec.PeekByte()
@@ -322,12 +322,12 @@ func parseFetchItems(dec *wire.Decoder) (*imap.FetchOptions, error) {
 
 	if b == '(' {
 		if err := dec.ReadList(func() error {
-			return parseSingleFetchItem(dec, options)
+			return ParseSingleFetchItem(dec, options)
 		}); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := parseSingleFetchItem(dec, options); err != nil {
+		if err := ParseSingleFetchItem(dec, options); err != nil {
 			return nil, err
 		}
 	}
@@ -335,8 +335,8 @@ func parseFetchItems(dec *wire.Decoder) (*imap.FetchOptions, error) {
 	return options, nil
 }
 
-// parseSingleFetchItem parses a single FETCH item or macro.
-func parseSingleFetchItem(dec *wire.Decoder, options *imap.FetchOptions) error {
+// ParseSingleFetchItem parses a single FETCH item or macro.
+func ParseSingleFetchItem(dec *wire.Decoder, options *imap.FetchOptions) error {
 	item, err := dec.ReadAtom()
 	if err != nil {
 		return err
@@ -382,7 +382,7 @@ func parseSingleFetchItem(dec *wire.Decoder, options *imap.FetchOptions) error {
 		peek := strings.ToUpper(item) == "BODY.PEEK"
 		b, err := dec.PeekByte()
 		if err == nil && b == '[' {
-			section, err := parseFetchBodySection(dec, peek)
+			section, err := ParseFetchBodySection(dec, peek)
 			if err != nil {
 				return err
 			}
@@ -406,8 +406,8 @@ func parseSingleFetchItem(dec *wire.Decoder, options *imap.FetchOptions) error {
 	return nil
 }
 
-// parseFetchBodySection parses a BODY[section] or BODY.PEEK[section] specification.
-func parseFetchBodySection(dec *wire.Decoder, peek bool) (*imap.FetchItemBodySection, error) {
+// ParseFetchBodySection parses a BODY[section] or BODY.PEEK[section] specification.
+func ParseFetchBodySection(dec *wire.Decoder, peek bool) (*imap.FetchItemBodySection, error) {
 	section := &imap.FetchItemBodySection{
 		Peek: peek,
 	}
@@ -441,7 +441,7 @@ func parseFetchBodySection(dec *wire.Decoder, peek bool) (*imap.FetchItemBodySec
 			if err := dec.ReadSP(); err != nil {
 				return nil, err
 			}
-			fields, err := readFieldList(dec)
+			fields, err := ReadFieldList(dec)
 			if err != nil {
 				return nil, err
 			}
@@ -451,7 +451,7 @@ func parseFetchBodySection(dec *wire.Decoder, peek bool) (*imap.FetchItemBodySec
 			if err := dec.ReadSP(); err != nil {
 				return nil, err
 			}
-			fields, err := readFieldList(dec)
+			fields, err := ReadFieldList(dec)
 			if err != nil {
 				return nil, err
 			}
@@ -481,8 +481,8 @@ func parseFetchBodySection(dec *wire.Decoder, peek bool) (*imap.FetchItemBodySec
 	return section, nil
 }
 
-// readFieldList reads a parenthesized list of header field names.
-func readFieldList(dec *wire.Decoder) ([]string, error) {
+// ReadFieldList reads a parenthesized list of header field names.
+func ReadFieldList(dec *wire.Decoder) ([]string, error) {
 	var fields []string
 	if err := dec.ReadList(func() error {
 		field, err := dec.ReadAString()

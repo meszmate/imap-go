@@ -34,6 +34,8 @@ type FetchOptions struct {
 
 	// ChangedSince only fetches messages with a mod-sequence greater than this value.
 	ChangedSince uint64
+	// Vanished requests VANISHED responses instead of EXPUNGE (QRESYNC).
+	Vanished bool
 }
 
 // FetchItemBodySection represents a BODY[section] fetch item.
