@@ -146,9 +146,9 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **CONDSTORE** (RFC 7162) — FETCH/STORE/SELECT/EXAMINE WrapHandler with CHANGEDSINCE/UNCHANGEDSINCE/MODSEQ parsing
 - [x] **QRESYNC** (RFC 7162) — SELECT/EXAMINE WrapHandler with QRESYNC params, VANISHED (EARLIER) responses, FETCH VANISHED modifier
 - [x] **UIDPLUS** (RFC 4315) — COPY/EXPUNGE WrapHandler with CopyUIDs/ExpungeUIDs routing, COPYUID response codes
+- [x] **ESEARCH** (RFC 4731) — SEARCH WrapHandler with RETURN (MIN MAX COUNT ALL SAVE) options, ESEARCH response format
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **ESEARCH** (RFC 4731) — TODO: wrap SEARCH for RETURN (MIN MAX COUNT ALL SAVE) options
 - [ ] **LIST-EXTENDED** (RFC 5258) — TODO: wrap LIST for selection/return options parsing
 - [ ] **LIST-STATUS** (RFC 5819) — TODO: wrap LIST for STATUS return option
 - [ ] **LIST-MYRIGHTS** (RFC 8440) — TODO: wrap LIST for MYRIGHTS return option
