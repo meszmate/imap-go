@@ -118,61 +118,71 @@ imaptest/      Test infrastructure (harness + mocks)
 
 ## Extensions
 
-50+ IMAP extensions are available in `extensions/`:
+52 IMAP extensions in `extensions/`. Status legend:
+- **Full** = command handlers + session interface + protocol parsing
+- **Session** = session interface defined, capability advertised, needs WrapHandler implementation
+- **Core** = handled by server core, extension just advertises capability
 
-| Extension | RFC | Capability |
-|-----------|-----|------------|
-| IDLE | 2177 | IDLE |
-| NAMESPACE | 2342 | NAMESPACE |
-| ID | 2971 | ID |
-| CHILDREN | 3348 | CHILDREN |
-| MULTIAPPEND | 3502 | MULTIAPPEND |
-| BINARY | 3516 | BINARY |
-| UNSELECT | 3691 | UNSELECT |
-| ACL | 4314 | ACL |
-| UIDPLUS | 4315 | UIDPLUS |
-| URLAUTH | 4467 | URLAUTH |
-| CATENATE | 4469 | CATENATE |
-| ESEARCH | 4731 | ESEARCH |
-| SASL-IR | 4959 | SASL-IR |
-| COMPRESS | 4978 | COMPRESS=DEFLATE |
-| WITHIN | 5032 | WITHIN |
-| ENABLE | 5161 | ENABLE |
-| SEARCHRES | 5182 | SEARCHRES |
-| LANGUAGE | 5255 | LANGUAGE |
-| SORT | 5256 | SORT |
-| THREAD | 5256 | THREAD=* |
-| LIST-EXTENDED | 5258 | LIST-EXTENDED |
-| CONVERT | 5259 | CONVERT |
-| CONTEXT | 5267 | CONTEXT=SEARCH, ESORT |
-| METADATA | 5464 | METADATA |
-| NOTIFY | 5465 | NOTIFY |
-| FILTERS | 5466 | FILTERS |
-| LIST-STATUS | 5819 | LIST-STATUS |
-| SORT=DISPLAY | 5957 | SORT=DISPLAY |
-| SPECIAL-USE | 6154 | SPECIAL-USE |
-| SEARCH=FUZZY | 6203 | SEARCH=FUZZY |
-| MOVE | 6851 | MOVE |
-| UTF8=ACCEPT | 6855 | UTF8=ACCEPT |
-| CONDSTORE | 7162 | CONDSTORE |
-| QRESYNC | 7162 | QRESYNC |
-| MULTISEARCH | 7377 | MULTISEARCH |
-| LITERAL+ | 7888 | LITERAL+ |
-| APPENDLIMIT | 7889 | APPENDLIMIT |
-| UNAUTHENTICATE | 8437 | UNAUTHENTICATE |
-| STATUS=SIZE | 8438 | STATUS=SIZE |
-| LIST-MYRIGHTS | 8440 | LIST-MYRIGHTS |
-| OBJECTID | 8474 | OBJECTID |
-| REPLACE | 8508 | REPLACE |
-| SAVEDATE | 8514 | SAVEDATE |
-| PREVIEW | 8970 | PREVIEW |
-| QUOTA | 9208 | QUOTA |
-| PARTIAL | 9394 | PARTIAL |
-| INPROGRESS | 9585 | INPROGRESS |
-| UIDONLY | 9586 | UIDONLY |
-| LIST-METADATA | 9590 | LIST-METADATA |
-| JMAPACCESS | 9698 | JMAPACCESS |
-| MESSAGELIMIT | 9738 | MESSAGELIMIT |
+### Fully implemented (command handlers + session interface)
+
+- [x] **MOVE** (RFC 6851) — MOVE command handler
+- [x] **ACL** (RFC 4314) — SETACL, DELETEACL, GETACL, LISTRIGHTS, MYRIGHTS
+- [x] **QUOTA** (RFC 9208) — GETQUOTA, GETQUOTAROOT, SETQUOTA
+- [x] **METADATA** (RFC 5464) — SETMETADATA, GETMETADATA
+- [x] **SORT** (RFC 5256) — SORT command handler
+- [x] **THREAD** (RFC 5256) — THREAD command handler
+- [x] **NAMESPACE** (RFC 2342) — NAMESPACE command handler
+- [x] **ID** (RFC 2971) — ID command handler
+- [x] **UNSELECT** (RFC 3691) — UNSELECT command with state transition
+- [x] **UNAUTHENTICATE** (RFC 8437) — UNAUTHENTICATE command
+- [x] **COMPRESS** (RFC 4978) — COMPRESS command (DEFLATE)
+- [x] **LANGUAGE** (RFC 5255) — LANGUAGE command
+- [x] **REPLACE** (RFC 8508) — REPLACE command with APPENDUID
+- [x] **URLAUTH** (RFC 4467) — GENURLAUTH, RESETKEY, URLFETCH
+- [x] **FILTERS** (RFC 5466) — GETFILTER, SETFILTER
+- [x] **CONVERT** (RFC 5259) — CONVERT command
+- [x] **NOTIFY** (RFC 5465) — NOTIFY SET/NONE
+- [x] **CATENATE** (RFC 4469) — APPEND WrapHandler with CATENATE parsing
+
+### Session interface defined (needs WrapHandler for full protocol support)
+
+- [ ] **CONDSTORE** (RFC 7162) — TODO: wrap FETCH/STORE/SELECT/SEARCH for CHANGEDSINCE/UNCHANGEDSINCE/MODSEQ
+- [ ] **QRESYNC** (RFC 7162) — TODO: wrap SELECT for QRESYNC params, VANISHED responses
+- [ ] **UIDPLUS** (RFC 4315) — TODO: wrap APPEND/COPY/EXPUNGE for APPENDUID/COPYUID response codes
+- [ ] **ESEARCH** (RFC 4731) — TODO: wrap SEARCH for RETURN (MIN MAX COUNT ALL SAVE) options
+- [ ] **LIST-EXTENDED** (RFC 5258) — TODO: wrap LIST for selection/return options parsing
+- [ ] **LIST-STATUS** (RFC 5819) — TODO: wrap LIST for STATUS return option
+- [ ] **LIST-MYRIGHTS** (RFC 8440) — TODO: wrap LIST for MYRIGHTS return option
+- [ ] **LIST-METADATA** (RFC 9590) — TODO: wrap LIST for METADATA return option
+- [ ] **SPECIAL-USE** (RFC 6154) — TODO: wrap LIST/CREATE for special-use attributes
+- [ ] **BINARY** (RFC 3516) — TODO: wrap FETCH/APPEND for BINARY[] sections
+- [ ] **SEARCHRES** (RFC 5182) — TODO: wire SAVE/$ result references
+- [ ] **SEARCH=FUZZY** (RFC 6203) — TODO: wrap SEARCH for FUZZY modifier
+- [ ] **PARTIAL** (RFC 9394) — TODO: wrap SEARCH/SORT for PARTIAL return option
+- [ ] **UTF8=ACCEPT** (RFC 6855) — TODO: OnEnabled + wrap AUTHENTICATE/SELECT/APPEND
+- [ ] **UIDONLY** (RFC 9586) — TODO: OnEnabled + suppress sequence numbers in responses
+- [ ] **MULTIAPPEND** (RFC 3502) — TODO: wrap APPEND for multi-message detection
+- [ ] **ESORT** (RFC 5267) — TODO: wrap SORT for extended return options
+- [ ] **CONTEXT** (RFC 5267) — TODO: wrap SEARCH/SORT for CONTEXT/UPDATE
+- [ ] **MULTISEARCH** (RFC 7377) — TODO: multi-mailbox SEARCH
+- [ ] **PREVIEW** (RFC 8970) — session interface for FETCH PREVIEW data
+- [ ] **OBJECTID** (RFC 8474) — session interface for EMAILID/THREADID/MAILBOXID
+- [ ] **SAVEDATE** (RFC 8514) — session interface for SAVEDATE in FETCH/SEARCH
+- [ ] **STATUS=SIZE** (RFC 8438) — core handles SIZE in STATUS
+
+### Core-handled (capability advertisement only)
+
+- [x] **IDLE** (RFC 2177) — handled in `server/commands/idle.go`
+- [x] **ENABLE** (RFC 5161) — handled in `server/commands/enable.go`
+- [x] **SASL-IR** (RFC 4959) — handled in `server/commands/authenticate.go`
+- [x] **LITERAL+** (RFC 7888) — handled in `wire/` layer
+- [x] **CHILDREN** (RFC 3348) — LIST attributes set by session backend
+- [x] **WITHIN** (RFC 5032) — SearchCriteria.Older/Younger already in core
+- [x] **SORT=DISPLAY** (RFC 5957) — SortKey DISPLAYFROM/DISPLAYTO in core
+- [x] **APPENDLIMIT** (RFC 7889) — StatusData.AppendLimit in core
+- [x] **INPROGRESS** (RFC 9585) — response code only
+- [x] **JMAPACCESS** (RFC 9698) — capability only
+- [x] **MESSAGELIMIT** (RFC 9738) — capability only
 
 ## Middleware
 
