@@ -145,9 +145,9 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **CATENATE** (RFC 4469) — APPEND WrapHandler with CATENATE parsing
 - [x] **CONDSTORE** (RFC 7162) — FETCH/STORE/SELECT/EXAMINE WrapHandler with CHANGEDSINCE/UNCHANGEDSINCE/MODSEQ parsing
 - [x] **QRESYNC** (RFC 7162) — SELECT/EXAMINE WrapHandler with QRESYNC params, VANISHED (EARLIER) responses, FETCH VANISHED modifier
+- [x] **UIDPLUS** (RFC 4315) — COPY/EXPUNGE WrapHandler with CopyUIDs/ExpungeUIDs routing, COPYUID response codes
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **UIDPLUS** (RFC 4315) — TODO: wrap APPEND/COPY/EXPUNGE for APPENDUID/COPYUID response codes
 - [ ] **ESEARCH** (RFC 4731) — TODO: wrap SEARCH for RETURN (MIN MAX COUNT ALL SAVE) options
 - [ ] **LIST-EXTENDED** (RFC 5258) — TODO: wrap LIST for selection/return options parsing
 - [ ] **LIST-STATUS** (RFC 5819) — TODO: wrap LIST for STATUS return option
