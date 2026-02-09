@@ -143,10 +143,10 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **CONVERT** (RFC 5259) — CONVERT command
 - [x] **NOTIFY** (RFC 5465) — NOTIFY SET/NONE
 - [x] **CATENATE** (RFC 4469) — APPEND WrapHandler with CATENATE parsing
+- [x] **CONDSTORE** (RFC 7162) — FETCH/STORE/SELECT/EXAMINE WrapHandler with CHANGEDSINCE/UNCHANGEDSINCE/MODSEQ parsing
 
 ### Session interface defined (needs WrapHandler for full protocol support)
 
-- [ ] **CONDSTORE** (RFC 7162) — TODO: wrap FETCH/STORE/SELECT/SEARCH for CHANGEDSINCE/UNCHANGEDSINCE/MODSEQ
 - [ ] **QRESYNC** (RFC 7162) — TODO: wrap SELECT for QRESYNC params, VANISHED responses
 - [ ] **UIDPLUS** (RFC 4315) — TODO: wrap APPEND/COPY/EXPUNGE for APPENDUID/COPYUID response codes
 - [ ] **ESEARCH** (RFC 4731) — TODO: wrap SEARCH for RETURN (MIN MAX COUNT ALL SAVE) options
