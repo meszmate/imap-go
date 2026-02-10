@@ -45,6 +45,9 @@ type SelectData struct {
 	// ReadOnly is true if the mailbox was opened read-only.
 	ReadOnly bool
 
+	// Vanished contains UIDs of messages expunged since the client's last known state (QRESYNC).
+	Vanished *UIDSet
+
 	// MailboxID is the mailbox ID (RFC 8474).
 	MailboxID string
 }

@@ -42,6 +42,9 @@ func Search() server.CommandHandlerFunc {
 					e.SP().Number(num)
 				}
 			}
+			if data.ModSeq > 0 {
+				e.SP().BeginList().Atom("MODSEQ").SP().Number64(data.ModSeq).EndList()
+			}
 			e.CRLF()
 		})
 
@@ -236,6 +239,41 @@ func parseSearchCriteria(dec *wire.Decoder, criteria *imap.SearchCriteria) error
 				return err
 			}
 			criteria.UID = uidSet
+		case "MODSEQ":
+			if err := dec.ReadSP(); err != nil {
+				return err
+			}
+			modseqCrit := &imap.SearchCriteriaModSeq{}
+			// Check for optional entry-name (quoted string like "/flags/\\seen")
+			b, err := dec.PeekByte()
+			if err != nil {
+				return err
+			}
+			if b == '"' {
+				entryName, err := dec.ReadQuotedString()
+				if err != nil {
+					return err
+				}
+				modseqCrit.MetadataName = entryName
+				if err := dec.ReadSP(); err != nil {
+					return err
+				}
+				// Read entry-type: "shared", "priv", or "all"
+				entryType, err := dec.ReadAtom()
+				if err != nil {
+					return err
+				}
+				modseqCrit.MetadataType = strings.ToLower(entryType)
+				if err := dec.ReadSP(); err != nil {
+					return err
+				}
+			}
+			n, err := dec.ReadNumber64()
+			if err != nil {
+				return err
+			}
+			modseqCrit.ModSeq = n
+			criteria.ModSeq = modseqCrit
 		case "NOT":
 			if err := dec.ReadSP(); err != nil {
 				return err

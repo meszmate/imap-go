@@ -1,6 +1,9 @@
 package server
 
 import (
+	"io"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -110,6 +113,20 @@ func (w *FetchWriter) WriteFetchData(data *imap.FetchMessageData) {
 		if data.Preview != "" {
 			sp()
 			enc.Atom("PREVIEW").SP().String(data.Preview)
+		}
+
+		// Write BINARY sections (RFC 3516)
+		for section, reader := range data.BinarySection {
+			sp()
+			enc.Atom("BINARY[" + formatPart(section.Part) + "]").SP()
+			binaryData, _ := io.ReadAll(reader.Reader)
+			enc.BinaryLiteral(binaryData)
+		}
+
+		// Write BINARY.SIZE sections (RFC 3516)
+		for _, bs := range data.BinarySizeSection {
+			sp()
+			enc.Atom("BINARY.SIZE[" + formatPart(bs.Part) + "]").SP().Number(bs.Size)
 		}
 
 		enc.EndList().CRLF()
@@ -225,8 +242,114 @@ func (w *ListWriter) WriteList(data *imap.ListData) {
 
 		// Mailbox name
 		enc.SP().MailboxName(data.Mailbox)
+
+		// Extended data items (RFC 5258)
+		if hasExtendedData(data) {
+			enc.SP().BeginList()
+			first := true
+			sp := func() {
+				if !first {
+					enc.SP()
+				}
+				first = false
+			}
+			if len(data.ChildInfo) > 0 {
+				sp()
+				enc.QuotedString("CHILDINFO").SP().BeginList()
+				for i, ci := range data.ChildInfo {
+					if i > 0 {
+						enc.SP()
+					}
+					enc.QuotedString(ci)
+				}
+				enc.EndList()
+			}
+			if data.OldName != "" {
+				sp()
+				enc.QuotedString("OLDNAME").SP().BeginList().MailboxName(data.OldName).EndList()
+			}
+			if data.MyRights != "" {
+				sp()
+				enc.QuotedString("MYRIGHTS").SP().QuotedString(data.MyRights)
+			}
+			if data.Metadata != nil {
+				sp()
+				enc.QuotedString("METADATA").SP().BeginList()
+				mFirst := true
+				for k, v := range data.Metadata {
+					if !mFirst {
+						enc.SP()
+					}
+					enc.QuotedString(k).SP().QuotedString(v)
+					mFirst = false
+				}
+				enc.EndList()
+			}
+			enc.EndList()
+		}
+
 		enc.CRLF()
 	})
+
+	// STATUS is emitted as a separate untagged response
+	if data.Status != nil {
+		w.enc.Encode(func(enc *wire.Encoder) {
+			enc.Star().Atom("STATUS").SP().MailboxName(data.Mailbox).SP().BeginList()
+			first := true
+			sp := func() {
+				if !first {
+					enc.SP()
+				}
+				first = false
+			}
+			if data.Status.NumMessages != nil {
+				sp()
+				enc.Atom("MESSAGES").SP().Number(*data.Status.NumMessages)
+			}
+			if data.Status.UIDNext != nil {
+				sp()
+				enc.Atom("UIDNEXT").SP().Number(*data.Status.UIDNext)
+			}
+			if data.Status.UIDValidity != nil {
+				sp()
+				enc.Atom("UIDVALIDITY").SP().Number(*data.Status.UIDValidity)
+			}
+			if data.Status.NumUnseen != nil {
+				sp()
+				enc.Atom("UNSEEN").SP().Number(*data.Status.NumUnseen)
+			}
+			if data.Status.NumRecent != nil {
+				sp()
+				enc.Atom("RECENT").SP().Number(*data.Status.NumRecent)
+			}
+			if data.Status.Size != nil {
+				sp()
+				enc.Atom("SIZE").SP().Number64(uint64(*data.Status.Size))
+			}
+			if data.Status.HighestModSeq != nil {
+				sp()
+				enc.Atom("HIGHESTMODSEQ").SP().Number64(*data.Status.HighestModSeq)
+			}
+			enc.EndList().CRLF()
+		})
+	}
+}
+
+// formatPart formats a MIME part number list (e.g., []int{1, 2}) as "1.2".
+func formatPart(part []int) string {
+	if len(part) == 0 {
+		return ""
+	}
+	s := make([]string, len(part))
+	for i, p := range part {
+		s[i] = strconv.Itoa(p)
+	}
+	return strings.Join(s, ".")
+}
+
+// hasExtendedData returns true if any extended data fields are set in ListData.
+func hasExtendedData(data *imap.ListData) bool {
+	return len(data.ChildInfo) > 0 || data.OldName != "" || data.MyRights != "" || data.Metadata != nil
 }
 
 // UpdateWriter writes unsolicited updates.

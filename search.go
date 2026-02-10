@@ -83,7 +83,7 @@ type SearchOptions struct {
 
 // SearchReturnPartial specifies partial result options.
 type SearchReturnPartial struct {
-	Offset uint32
+	Offset int32  // negative = end-relative (RFC 9394)
 	Count  uint32
 }
 
@@ -108,7 +108,7 @@ type SearchData struct {
 
 // SearchPartialData contains partial search results.
 type SearchPartialData struct {
-	Offset uint32
+	Offset int32  // negative = end-relative (RFC 9394)
 	Total  uint32
 	UIDs   []UID
 }

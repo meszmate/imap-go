@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"strconv"
 	"strings"
 
 	imap "github.com/meszmate/imap-go"
@@ -93,71 +94,231 @@ func parseSingleFetchItem(dec *wire.Decoder, options *imap.FetchOptions) error {
 		return err
 	}
 
-	switch strings.ToUpper(item) {
-	case "ALL":
+	upper := strings.ToUpper(item)
+	switch {
+	case upper == "ALL":
 		options.Flags = true
 		options.InternalDate = true
 		options.RFC822Size = true
 		options.Envelope = true
-	case "FAST":
+	case upper == "FAST":
 		options.Flags = true
 		options.InternalDate = true
 		options.RFC822Size = true
-	case "FULL":
+	case upper == "FULL":
 		options.Flags = true
 		options.InternalDate = true
 		options.RFC822Size = true
 		options.Envelope = true
 		options.BodyStructure = true
-	case "ENVELOPE":
+	case upper == "ENVELOPE":
 		options.Envelope = true
-	case "FLAGS":
+	case upper == "FLAGS":
 		options.Flags = true
-	case "INTERNALDATE":
+	case upper == "INTERNALDATE":
 		options.InternalDate = true
-	case "RFC822.SIZE":
+	case upper == "RFC822.SIZE":
 		options.RFC822Size = true
-	case "UID":
+	case upper == "UID":
 		options.UID = true
-	case "BODYSTRUCTURE":
+	case upper == "BODYSTRUCTURE":
 		options.BodyStructure = true
-	case "MODSEQ":
+	case upper == "MODSEQ":
 		options.ModSeq = true
-	case "PREVIEW":
+	case upper == "PREVIEW":
 		options.Preview = true
-	case "EMAILID":
+	case upper == "EMAILID":
 		options.EmailID = true
-	case "THREADID":
+	case upper == "THREADID":
 		options.ThreadID = true
-	case "BODY.PEEK", "BODY":
-		peek := strings.ToUpper(item) == "BODY.PEEK"
-		// Check if there's a section specification
+
+	// BODY with bracket embedded in atom ([ is an atom char)
+	case strings.HasPrefix(upper, "BODY.PEEK["):
+		section, err := parseFetchBodySectionFromAtom(dec, item, true)
+		if err != nil {
+			return err
+		}
+		options.BodySection = append(options.BodySection, section)
+	case strings.HasPrefix(upper, "BODY["):
+		section, err := parseFetchBodySectionFromAtom(dec, item, false)
+		if err != nil {
+			return err
+		}
+		options.BodySection = append(options.BodySection, section)
+	case upper == "BODY.PEEK":
 		b, err := dec.PeekByte()
 		if err == nil && b == '[' {
-			section, err := parseFetchBodySection(dec, peek)
+			section, err := parseFetchBodySection(dec, true)
 			if err != nil {
 				return err
 			}
 			options.BodySection = append(options.BodySection, section)
-		} else if !peek {
-			// bare BODY means BODYSTRUCTURE
+		}
+	case upper == "BODY":
+		b, err := dec.PeekByte()
+		if err == nil && b == '[' {
+			section, err := parseFetchBodySection(dec, false)
+			if err != nil {
+				return err
+			}
+			options.BodySection = append(options.BodySection, section)
+		} else {
 			options.BodyStructure = true
 		}
-	case "RFC822":
-		// RFC822 is equivalent to BODY[]
+
+	// BINARY items (RFC 3516)
+	case strings.HasPrefix(upper, "BINARY.SIZE["):
+		part := parseBinaryPart(item[len("BINARY.SIZE["):])
+		if err := dec.ExpectByte(']'); err != nil {
+			return err
+		}
+		options.BinarySizeSection = append(options.BinarySizeSection, part)
+	case strings.HasPrefix(upper, "BINARY.PEEK["):
+		section := parseBinaryItemFromAtom(item, "BINARY.PEEK[", true)
+		if err := dec.ExpectByte(']'); err != nil {
+			return err
+		}
+		section.Partial = consumePartial(dec)
+		options.BinarySection = append(options.BinarySection, section)
+	case strings.HasPrefix(upper, "BINARY["):
+		section := parseBinaryItemFromAtom(item, "BINARY[", false)
+		if err := dec.ExpectByte(']'); err != nil {
+			return err
+		}
+		section.Partial = consumePartial(dec)
+		options.BinarySection = append(options.BinarySection, section)
+
+	case upper == "RFC822":
 		options.BodySection = append(options.BodySection, &imap.FetchItemBodySection{})
-	case "RFC822.HEADER":
+	case upper == "RFC822.HEADER":
 		options.BodySection = append(options.BodySection, &imap.FetchItemBodySection{
 			Specifier: "HEADER",
 			Peek:      true,
 		})
-	case "RFC822.TEXT":
+	case upper == "RFC822.TEXT":
 		options.BodySection = append(options.BodySection, &imap.FetchItemBodySection{
 			Specifier: "TEXT",
 		})
 	}
 
 	return nil
+}
+
+// parseFetchBodySectionFromAtom handles BODY[section or BODY.PEEK[section
+// where [ was included in the atom by ReadAtom.
+func parseFetchBodySectionFromAtom(dec *wire.Decoder, item string, peek bool) (*imap.FetchItemBodySection, error) {
+	bracketIdx := strings.IndexByte(item, '[')
+	sectionStr := strings.ToUpper(item[bracketIdx+1:])
+
+	section := &imap.FetchItemBodySection{Peek: peek}
+
+	switch {
+	case sectionStr == "":
+		// empty section — will read ] next
+	case sectionStr == "HEADER":
+		section.Specifier = "HEADER"
+	case sectionStr == "TEXT":
+		section.Specifier = "TEXT"
+	case sectionStr == "MIME":
+		section.Specifier = "MIME"
+	case strings.HasPrefix(sectionStr, "HEADER.FIELDS.NOT"):
+		section.Specifier = "HEADER.FIELDS.NOT"
+		section.NotFields = true
+		if err := dec.ReadSP(); err != nil {
+			return nil, err
+		}
+		fields, err := readFieldList(dec)
+		if err != nil {
+			return nil, err
+		}
+		section.Fields = fields
+	case strings.HasPrefix(sectionStr, "HEADER.FIELDS"):
+		section.Specifier = "HEADER.FIELDS"
+		if err := dec.ReadSP(); err != nil {
+			return nil, err
+		}
+		fields, err := readFieldList(dec)
+		if err != nil {
+			return nil, err
+		}
+		section.Fields = fields
+	}
+
+	if err := dec.ExpectByte(']'); err != nil {
+		return nil, err
+	}
+
+	// Check for partial <offset.count>
+	b, err := dec.PeekByte()
+	if err == nil && b == '<' {
+		for {
+			ch, err := dec.PeekByte()
+			if err != nil {
+				break
+			}
+			if ch == '>' {
+				_ = dec.ExpectByte('>')
+				break
+			}
+			_, _ = dec.ReadAtom()
+		}
+	}
+
+	return section, nil
+}
+
+// parseBinaryPart parses a MIME part string like "1.2" into []int{1, 2}.
+func parseBinaryPart(s string) []int {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ".")
+	result := make([]int, 0, len(parts))
+	for _, p := range parts {
+		n, err := strconv.Atoi(p)
+		if err != nil {
+			continue
+		}
+		result = append(result, n)
+	}
+	return result
+}
+
+// parseBinaryItemFromAtom builds a FetchItemBinarySection from the atom string.
+func parseBinaryItemFromAtom(item, prefix string, peek bool) *imap.FetchItemBinarySection {
+	sectionStr := item[len(prefix):]
+	return &imap.FetchItemBinarySection{
+		Part: parseBinaryPart(sectionStr),
+		Peek: peek,
+	}
+}
+
+// consumePartial consumes a <offset.count> partial specifier if present.
+func consumePartial(dec *wire.Decoder) *imap.SectionPartial {
+	b, err := dec.PeekByte()
+	if err != nil || b != '<' {
+		return nil
+	}
+	_ = dec.ExpectByte('<')
+	atom, err := dec.ReadAtom()
+	if err != nil {
+		return nil
+	}
+	_ = dec.ExpectByte('>')
+
+	parts := strings.SplitN(atom, ".", 2)
+	if len(parts) != 2 {
+		return nil
+	}
+	offset, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return nil
+	}
+	count, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return nil
+	}
+	return &imap.SectionPartial{Offset: offset, Count: count}
 }
 
 func parseFetchBodySection(dec *wire.Decoder, peek bool) (*imap.FetchItemBodySection, error) {

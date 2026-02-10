@@ -8,6 +8,8 @@ type AppendOptions struct {
 	Flags []Flag
 	// InternalDate is the internal date to set on the message.
 	InternalDate time.Time
+	// Binary indicates the message was sent using binary literal (~{N}) notation (RFC 3516).
+	Binary bool
 }
 
 // AppendData represents the result of an APPEND command.

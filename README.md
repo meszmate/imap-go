@@ -143,22 +143,21 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **CONVERT** (RFC 5259) — CONVERT command
 - [x] **NOTIFY** (RFC 5465) — NOTIFY SET/NONE
 - [x] **CATENATE** (RFC 4469) — APPEND WrapHandler with CATENATE parsing
+- [x] **CONDSTORE** (RFC 7162) — FETCH/STORE/SELECT/EXAMINE WrapHandler with CHANGEDSINCE/UNCHANGEDSINCE/MODSEQ parsing
+- [x] **QRESYNC** (RFC 7162) — SELECT/EXAMINE WrapHandler with QRESYNC params, VANISHED (EARLIER) responses, FETCH VANISHED modifier
+- [x] **UIDPLUS** (RFC 4315) — COPY/EXPUNGE WrapHandler with CopyUIDs/ExpungeUIDs routing, COPYUID response codes
+- [x] **ESEARCH** (RFC 4731) — SEARCH WrapHandler with RETURN (MIN MAX COUNT ALL SAVE) options, ESEARCH response format
+- [x] **LIST-EXTENDED** (RFC 5258) — LIST WrapHandler with selection options (SUBSCRIBED, REMOTE, RECURSIVEMATCH, SPECIAL-USE) and return options (SUBSCRIBED, CHILDREN, STATUS, MYRIGHTS, SPECIAL-USE)
+- [x] **LIST-STATUS** (RFC 5819) — Handled via LIST-EXTENDED RETURN (STATUS) option
+- [x] **LIST-MYRIGHTS** (RFC 8440) — Handled via LIST-EXTENDED RETURN (MYRIGHTS) option
+- [x] **LIST-METADATA** (RFC 9590) — Handled via LIST-EXTENDED RETURN (METADATA) option
+- [x] **SPECIAL-USE** (RFC 6154) — CREATE WrapHandler with USE attribute parsing; LIST handled via LIST-EXTENDED
+- [x] **BINARY** (RFC 3516) — BINARY[]/BINARY.PEEK[]/BINARY.SIZE[] fetch items, binary literal ~{N} APPEND support
+- [x] **SEARCHRES** (RFC 5182) — SEARCH RETURN (SAVE) with result saving, $ reference in FETCH/STORE/COPY/MOVE sequence sets and SEARCH criteria
+- [x] **PARTIAL** (RFC 9394) — SEARCH/SORT RETURN (PARTIAL offset:count) with paginated results in ESEARCH response format
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-
-- [ ] **CONDSTORE** (RFC 7162) — TODO: wrap FETCH/STORE/SELECT/SEARCH for CHANGEDSINCE/UNCHANGEDSINCE/MODSEQ
-- [ ] **QRESYNC** (RFC 7162) — TODO: wrap SELECT for QRESYNC params, VANISHED responses
-- [ ] **UIDPLUS** (RFC 4315) — TODO: wrap APPEND/COPY/EXPUNGE for APPENDUID/COPYUID response codes
-- [ ] **ESEARCH** (RFC 4731) — TODO: wrap SEARCH for RETURN (MIN MAX COUNT ALL SAVE) options
-- [ ] **LIST-EXTENDED** (RFC 5258) — TODO: wrap LIST for selection/return options parsing
-- [ ] **LIST-STATUS** (RFC 5819) — TODO: wrap LIST for STATUS return option
-- [ ] **LIST-MYRIGHTS** (RFC 8440) — TODO: wrap LIST for MYRIGHTS return option
-- [ ] **LIST-METADATA** (RFC 9590) — TODO: wrap LIST for METADATA return option
-- [ ] **SPECIAL-USE** (RFC 6154) — TODO: wrap LIST/CREATE for special-use attributes
-- [ ] **BINARY** (RFC 3516) — TODO: wrap FETCH/APPEND for BINARY[] sections
-- [ ] **SEARCHRES** (RFC 5182) — TODO: wire SAVE/$ result references
 - [ ] **SEARCH=FUZZY** (RFC 6203) — TODO: wrap SEARCH for FUZZY modifier
-- [ ] **PARTIAL** (RFC 9394) — TODO: wrap SEARCH/SORT for PARTIAL return option
 - [ ] **UTF8=ACCEPT** (RFC 6855) — TODO: OnEnabled + wrap AUTHENTICATE/SELECT/APPEND
 - [ ] **UIDONLY** (RFC 9586) — TODO: OnEnabled + suppress sequence numbers in responses
 - [ ] **MULTIAPPEND** (RFC 3502) — TODO: wrap APPEND for multi-message detection
