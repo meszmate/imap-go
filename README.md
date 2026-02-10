@@ -150,9 +150,9 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **LIST-EXTENDED** (RFC 5258) — LIST WrapHandler with selection options (SUBSCRIBED, REMOTE, RECURSIVEMATCH, SPECIAL-USE) and return options (SUBSCRIBED, CHILDREN, STATUS, MYRIGHTS, SPECIAL-USE)
 - [x] **LIST-STATUS** (RFC 5819) — Handled via LIST-EXTENDED RETURN (STATUS) option
 - [x] **LIST-MYRIGHTS** (RFC 8440) — Handled via LIST-EXTENDED RETURN (MYRIGHTS) option
+- [x] **LIST-METADATA** (RFC 9590) — Handled via LIST-EXTENDED RETURN (METADATA) option
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **LIST-METADATA** (RFC 9590) — TODO: wrap LIST for METADATA return option
 - [ ] **SPECIAL-USE** (RFC 6154) — TODO: wrap LIST/CREATE for special-use attributes
 - [ ] **BINARY** (RFC 3516) — TODO: wrap FETCH/APPEND for BINARY[] sections
 - [ ] **SEARCHRES** (RFC 5182) — TODO: wire SAVE/$ result references

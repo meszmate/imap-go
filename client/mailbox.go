@@ -164,6 +164,19 @@ func (c *Client) ListMailboxesExtended(ref string, patterns []string, options *i
 			items := buildStatusItems(options.ReturnStatus)
 			retOpts = append(retOpts, "STATUS ("+strings.Join(items, " ")+")")
 		}
+		if options.ReturnMetadata != nil {
+			var metaParts []string
+			for _, opt := range options.ReturnMetadata.Options {
+				metaParts = append(metaParts, quoteArg(opt))
+			}
+			if options.ReturnMetadata.MaxSize > 0 {
+				metaParts = append(metaParts, fmt.Sprintf("MAXSIZE %d", options.ReturnMetadata.MaxSize))
+			}
+			if options.ReturnMetadata.Depth != "" {
+				metaParts = append(metaParts, "DEPTH "+options.ReturnMetadata.Depth)
+			}
+			retOpts = append(retOpts, "METADATA ("+strings.Join(metaParts, " ")+")")
+		}
 		args = append(args, "RETURN", "("+strings.Join(retOpts, " ")+")")
 	}
 
@@ -442,6 +455,25 @@ func parseExtendedData(s string, data *imap.ListData) {
 			val, rest2 := readQuotedOrAtom(inner)
 			data.MyRights = val
 			inner = strings.TrimLeft(rest2, " ")
+		case "METADATA":
+			// Value is a parenthesized list of key-value pairs
+			if strings.HasPrefix(inner, "(") {
+				listStr, rest2 := extractParenthesized(inner)
+				inner = strings.TrimLeft(rest2, " ")
+				data.Metadata = make(map[string]string)
+				listInner := listStr
+				for len(listInner) > 0 {
+					listInner = strings.TrimLeft(listInner, " ")
+					if listInner == "" {
+						break
+					}
+					key, r := readQuotedOrAtom(listInner)
+					r = strings.TrimLeft(r, " ")
+					val, r2 := readQuotedOrAtom(r)
+					data.Metadata[key] = val
+					listInner = strings.TrimLeft(r2, " ")
+				}
+			}
 		}
 	}
 }

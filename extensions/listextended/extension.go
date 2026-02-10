@@ -332,6 +332,44 @@ func parseReturnOptions(dec *wire.Decoder, options *imap.ListOptions) error {
 				return imap.ErrBad("invalid STATUS items list")
 			}
 			options.ReturnStatus = statusOpts
+		case "METADATA":
+			if err := dec.ReadSP(); err != nil {
+				return imap.ErrBad("missing METADATA options")
+			}
+			metaOpts := &imap.ListReturnMetadata{}
+			if err := dec.ReadList(func() error {
+				item, err := dec.ReadAString()
+				if err != nil {
+					return err
+				}
+				upper := strings.ToUpper(item)
+				switch upper {
+				case "MAXSIZE":
+					if err := dec.ReadSP(); err != nil {
+						return imap.ErrBad("missing MAXSIZE value")
+					}
+					n, err := dec.ReadNumber64()
+					if err != nil {
+						return imap.ErrBad("invalid MAXSIZE value")
+					}
+					metaOpts.MaxSize = int64(n)
+				case "DEPTH":
+					if err := dec.ReadSP(); err != nil {
+						return imap.ErrBad("missing DEPTH value")
+					}
+					d, err := dec.ReadAtom()
+					if err != nil {
+						return imap.ErrBad("invalid DEPTH value")
+					}
+					metaOpts.Depth = d
+				default:
+					metaOpts.Options = append(metaOpts.Options, item)
+				}
+				return nil
+			}); err != nil {
+				return imap.ErrBad("invalid METADATA options list")
+			}
+			options.ReturnMetadata = metaOpts
 		default:
 			return imap.ErrBad("unknown RETURN option: " + atom)
 		}
