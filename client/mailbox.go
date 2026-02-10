@@ -56,6 +56,17 @@ func (c *Client) Create(mailbox string) error {
 	return c.executeCheck("CREATE", quoteArg(mailbox))
 }
 
+// CreateWithOptions creates a new mailbox with options.
+// If options includes a SpecialUse attribute, the USE parameter is sent
+// per RFC 6154: CREATE mailbox (USE (\Sent))
+func (c *Client) CreateWithOptions(mailbox string, options *imap.CreateOptions) error {
+	args := []string{quoteArg(mailbox)}
+	if options != nil && options.SpecialUse != "" {
+		args = append(args, "(USE ("+string(options.SpecialUse)+"))")
+	}
+	return c.executeCheck("CREATE", args...)
+}
+
 // Delete deletes a mailbox.
 func (c *Client) Delete(mailbox string) error {
 	return c.executeCheck("DELETE", quoteArg(mailbox))

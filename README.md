@@ -151,9 +151,9 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **LIST-STATUS** (RFC 5819) — Handled via LIST-EXTENDED RETURN (STATUS) option
 - [x] **LIST-MYRIGHTS** (RFC 8440) — Handled via LIST-EXTENDED RETURN (MYRIGHTS) option
 - [x] **LIST-METADATA** (RFC 9590) — Handled via LIST-EXTENDED RETURN (METADATA) option
+- [x] **SPECIAL-USE** (RFC 6154) — CREATE WrapHandler with USE attribute parsing; LIST handled via LIST-EXTENDED
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **SPECIAL-USE** (RFC 6154) — TODO: wrap LIST/CREATE for special-use attributes
 - [ ] **BINARY** (RFC 3516) — TODO: wrap FETCH/APPEND for BINARY[] sections
 - [ ] **SEARCHRES** (RFC 5182) — TODO: wire SAVE/$ result references
 - [ ] **SEARCH=FUZZY** (RFC 6203) — TODO: wrap SEARCH for FUZZY modifier
