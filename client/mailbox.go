@@ -106,6 +106,119 @@ func (c *Client) ListMailboxes(ref, pattern string) ([]*imap.ListData, error) {
 	return mailboxes, nil
 }
 
+// ListMailboxesExtended lists mailboxes with extended LIST options (RFC 5258).
+func (c *Client) ListMailboxesExtended(ref string, patterns []string, options *imap.ListOptions) ([]*imap.ListData, error) {
+	c.collectUntagged()
+
+	// Build command arguments
+	var args []string
+
+	// Selection options
+	if options != nil && hasSelectionOpts(options) {
+		var selOpts []string
+		if options.SelectSubscribed {
+			selOpts = append(selOpts, "SUBSCRIBED")
+		}
+		if options.SelectRemote {
+			selOpts = append(selOpts, "REMOTE")
+		}
+		if options.SelectRecursiveMatch {
+			selOpts = append(selOpts, "RECURSIVEMATCH")
+		}
+		if options.SelectSpecialUse {
+			selOpts = append(selOpts, "SPECIAL-USE")
+		}
+		args = append(args, "("+strings.Join(selOpts, " ")+")")
+	}
+
+	// Reference name
+	args = append(args, quoteArg(ref))
+
+	// Patterns
+	if len(patterns) == 1 {
+		args = append(args, quoteArg(patterns[0]))
+	} else {
+		var patternParts []string
+		for _, p := range patterns {
+			patternParts = append(patternParts, quoteArg(p))
+		}
+		args = append(args, "("+strings.Join(patternParts, " ")+")")
+	}
+
+	// Return options
+	if options != nil && hasReturnOpts(options) {
+		var retOpts []string
+		if options.ReturnSubscribed {
+			retOpts = append(retOpts, "SUBSCRIBED")
+		}
+		if options.ReturnChildren {
+			retOpts = append(retOpts, "CHILDREN")
+		}
+		if options.ReturnSpecialUse {
+			retOpts = append(retOpts, "SPECIAL-USE")
+		}
+		if options.ReturnMyRights {
+			retOpts = append(retOpts, "MYRIGHTS")
+		}
+		if options.ReturnStatus != nil {
+			items := buildStatusItems(options.ReturnStatus)
+			retOpts = append(retOpts, "STATUS ("+strings.Join(items, " ")+")")
+		}
+		args = append(args, "RETURN", "("+strings.Join(retOpts, " ")+")")
+	}
+
+	result, err := c.execute("LIST", args...)
+	if err != nil {
+		return nil, err
+	}
+	if result.status != "OK" {
+		return nil, &imap.IMAPError{StatusResponse: &imap.StatusResponse{
+			Type: imap.StatusResponseType(result.status),
+			Code: imap.ResponseCode(result.code),
+			Text: result.text,
+		}}
+	}
+
+	untagged := c.collectUntagged()
+	var mailboxes []*imap.ListData
+
+	// Build a map for matching STATUS responses to LIST entries
+	mailboxMap := make(map[string]*imap.ListData)
+
+	for _, line := range untagged {
+		if strings.HasPrefix(line, "LIST ") {
+			data := parseListResponse(line[5:])
+			if data != nil {
+				mailboxes = append(mailboxes, data)
+				mailboxMap[data.Mailbox] = data
+			}
+		}
+	}
+
+	// Match STATUS responses to mailboxes
+	for _, line := range untagged {
+		if strings.HasPrefix(line, "STATUS ") {
+			statusData := parseStatusResponse2(line[7:])
+			if statusData != nil {
+				if ld, ok := mailboxMap[statusData.Mailbox]; ok {
+					ld.Status = statusData
+				}
+			}
+		}
+	}
+
+	return mailboxes, nil
+}
+
+func hasSelectionOpts(opts *imap.ListOptions) bool {
+	return opts.SelectSubscribed || opts.SelectRemote || opts.SelectRecursiveMatch || opts.SelectSpecialUse
+}
+
+func hasReturnOpts(opts *imap.ListOptions) bool {
+	return opts.ReturnSubscribed || opts.ReturnChildren || opts.ReturnSpecialUse ||
+		opts.ReturnMyRights || opts.ReturnStatus != nil || opts.ReturnMetadata != nil
+}
+
 // Status returns the status of a mailbox.
 func (c *Client) Status(mailbox string, opts *imap.StatusOptions) (*imap.StatusData, error) {
 	items := buildStatusItems(opts)
@@ -191,8 +304,7 @@ func buildStatusItems(opts *imap.StatusOptions) []string {
 }
 
 func parseListResponse(line string) *imap.ListData {
-	// Very simplified LIST response parser
-	// Format: (attrs) "delim" mailbox
+	// Format: (attrs) "delim" mailbox [extended-data]
 	data := &imap.ListData{}
 
 	// Parse attributes
@@ -221,10 +333,167 @@ func parseListResponse(line string) *imap.ListData {
 		}
 	}
 
-	// Parse mailbox name
-	data.Mailbox = strings.Trim(line, `"`)
+	// Parse mailbox name — may be quoted or unquoted
+	mailbox, rest := parseMailboxName(line)
+	data.Mailbox = mailbox
+
+	// Parse extended data if present
+	rest = strings.TrimLeft(rest, " ")
+	if strings.HasPrefix(rest, "(") {
+		parseExtendedData(rest, data)
+	}
 
 	return data
+}
+
+// parseMailboxName extracts the mailbox name from the remaining line.
+// Returns the mailbox name and the rest of the line after it.
+func parseMailboxName(line string) (string, string) {
+	if strings.HasPrefix(line, `"`) {
+		// Quoted mailbox name
+		end := 1
+		for end < len(line) {
+			if line[end] == '\\' && end+1 < len(line) {
+				end += 2
+				continue
+			}
+			if line[end] == '"' {
+				return line[1:end], line[end+1:]
+			}
+			end++
+		}
+		return strings.Trim(line, `"`), ""
+	}
+
+	// Unquoted (atom) mailbox name — ends at SP or end of line
+	idx := strings.IndexByte(line, ' ')
+	if idx < 0 {
+		return line, ""
+	}
+	return line[:idx], line[idx:]
+}
+
+// parseExtendedData parses extended data items from a parenthesized list.
+// Format: ("CHILDINFO" ("SUBSCRIBED") "OLDNAME" ("OldName") ...)
+func parseExtendedData(s string, data *imap.ListData) {
+	// Remove outer parentheses
+	if len(s) < 2 || s[0] != '(' {
+		return
+	}
+	// Find matching close paren
+	depth := 0
+	end := -1
+	for i, ch := range s {
+		if ch == '(' {
+			depth++
+		} else if ch == ')' {
+			depth--
+			if depth == 0 {
+				end = i
+				break
+			}
+		}
+	}
+	if end < 0 {
+		return
+	}
+	inner := s[1:end]
+
+	// Parse key-value extended items
+	for len(inner) > 0 {
+		inner = strings.TrimLeft(inner, " ")
+		if inner == "" {
+			break
+		}
+
+		// Read key (quoted string like "CHILDINFO")
+		key, rest := readQuotedOrAtom(inner)
+		inner = strings.TrimLeft(rest, " ")
+		key = strings.ToUpper(key)
+
+		switch key {
+		case "CHILDINFO":
+			// Value is a parenthesized list of quoted strings
+			if strings.HasPrefix(inner, "(") {
+				listStr, rest2 := extractParenthesized(inner)
+				inner = strings.TrimLeft(rest2, " ")
+				// Parse items inside the parens
+				listInner := listStr
+				for len(listInner) > 0 {
+					listInner = strings.TrimLeft(listInner, " ")
+					if listInner == "" {
+						break
+					}
+					val, r := readQuotedOrAtom(listInner)
+					data.ChildInfo = append(data.ChildInfo, val)
+					listInner = r
+				}
+			}
+		case "OLDNAME":
+			// Value is a parenthesized mailbox name
+			if strings.HasPrefix(inner, "(") {
+				listStr, rest2 := extractParenthesized(inner)
+				inner = strings.TrimLeft(rest2, " ")
+				name, _ := readQuotedOrAtom(strings.TrimSpace(listStr))
+				data.OldName = name
+			}
+		case "MYRIGHTS":
+			// Value is a quoted string
+			val, rest2 := readQuotedOrAtom(inner)
+			data.MyRights = val
+			inner = strings.TrimLeft(rest2, " ")
+		}
+	}
+}
+
+// readQuotedOrAtom reads a quoted string or atom from the beginning of s.
+// Returns the value and the remaining string.
+func readQuotedOrAtom(s string) (string, string) {
+	if len(s) == 0 {
+		return "", ""
+	}
+	if s[0] == '"' {
+		// Quoted string
+		end := 1
+		for end < len(s) {
+			if s[end] == '\\' && end+1 < len(s) {
+				end += 2
+				continue
+			}
+			if s[end] == '"' {
+				return s[1:end], s[end+1:]
+			}
+			end++
+		}
+		return s[1:], ""
+	}
+
+	// Atom: read until space, paren, or end
+	end := 0
+	for end < len(s) && s[end] != ' ' && s[end] != '(' && s[end] != ')' {
+		end++
+	}
+	return s[:end], s[end:]
+}
+
+// extractParenthesized extracts content between matching parentheses.
+// Input should start with '('. Returns the inner content and remaining string.
+func extractParenthesized(s string) (string, string) {
+	if len(s) == 0 || s[0] != '(' {
+		return "", s
+	}
+	depth := 0
+	for i := range s {
+		if s[i] == '(' {
+			depth++
+		} else if s[i] == ')' {
+			depth--
+			if depth == 0 {
+				return s[1:i], s[i+1:]
+			}
+		}
+	}
+	return s[1:], ""
 }
 
 func parseStatusResponse2(line string) *imap.StatusData {

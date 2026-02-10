@@ -147,11 +147,11 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **QRESYNC** (RFC 7162) — SELECT/EXAMINE WrapHandler with QRESYNC params, VANISHED (EARLIER) responses, FETCH VANISHED modifier
 - [x] **UIDPLUS** (RFC 4315) — COPY/EXPUNGE WrapHandler with CopyUIDs/ExpungeUIDs routing, COPYUID response codes
 - [x] **ESEARCH** (RFC 4731) — SEARCH WrapHandler with RETURN (MIN MAX COUNT ALL SAVE) options, ESEARCH response format
+- [x] **LIST-EXTENDED** (RFC 5258) — LIST WrapHandler with selection options (SUBSCRIBED, REMOTE, RECURSIVEMATCH, SPECIAL-USE) and return options (SUBSCRIBED, CHILDREN, STATUS, MYRIGHTS, SPECIAL-USE)
+- [x] **LIST-STATUS** (RFC 5819) — Handled via LIST-EXTENDED RETURN (STATUS) option
+- [x] **LIST-MYRIGHTS** (RFC 8440) — Handled via LIST-EXTENDED RETURN (MYRIGHTS) option
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **LIST-EXTENDED** (RFC 5258) — TODO: wrap LIST for selection/return options parsing
-- [ ] **LIST-STATUS** (RFC 5819) — TODO: wrap LIST for STATUS return option
-- [ ] **LIST-MYRIGHTS** (RFC 8440) — TODO: wrap LIST for MYRIGHTS return option
 - [ ] **LIST-METADATA** (RFC 9590) — TODO: wrap LIST for METADATA return option
 - [ ] **SPECIAL-USE** (RFC 6154) — TODO: wrap LIST/CREATE for special-use attributes
 - [ ] **BINARY** (RFC 3516) — TODO: wrap FETCH/APPEND for BINARY[] sections
