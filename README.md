@@ -154,7 +154,7 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **SPECIAL-USE** (RFC 6154) — CREATE WrapHandler with USE attribute parsing; LIST handled via LIST-EXTENDED
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **BINARY** (RFC 3516) — TODO: wrap FETCH/APPEND for BINARY[] sections
+- [x] **BINARY** (RFC 3516) — BINARY[]/BINARY.PEEK[]/BINARY.SIZE[] fetch items, binary literal ~{N} APPEND support
 - [ ] **SEARCHRES** (RFC 5182) — TODO: wire SAVE/$ result references
 - [ ] **SEARCH=FUZZY** (RFC 6203) — TODO: wrap SEARCH for FUZZY modifier
 - [ ] **PARTIAL** (RFC 9394) — TODO: wrap SEARCH/SORT for PARTIAL return option

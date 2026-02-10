@@ -134,6 +134,17 @@ func (e *Encoder) LiteralNonSync(data []byte) *Encoder {
 	return e
 }
 
+// BinaryLiteral writes a binary literal ~{n}\r\n<data> (RFC 3516).
+func (e *Encoder) BinaryLiteral(data []byte) *Encoder {
+	_ = e.w.WriteByte('~')
+	_ = e.w.WriteByte('{')
+	_, _ = e.w.WriteString(strconv.Itoa(len(data)))
+	_ = e.w.WriteByte('}')
+	_, _ = e.w.WriteString("\r\n")
+	_, _ = e.w.Write(data)
+	return e
+}
+
 // LiteralWriter returns a writer for streaming literal data.
 func (e *Encoder) LiteralWriter(size int64, nonSync bool) io.Writer {
 	_ = e.w.WriteByte('{')

@@ -222,10 +222,14 @@ func handleCatenateAppend(ctx *server.CommandContext, original server.CommandHan
 // the mailbox, flags, and date have already been parsed from the arg decoder.
 func handleStandardAppend(ctx *server.CommandContext, dec *wire.Decoder, mailbox string, options *imap.AppendOptions) error {
 	// Read the literal size from the arg decoder. The arg decoder has the
-	// {N} or {N+} at the end of the line without a trailing CRLF.
-	litSize, err := readLiteralSize(dec)
+	// {N}, {N+}, or ~{N} at the end of the line without a trailing CRLF.
+	litSize, isBinary, err := readLiteralSizeBinary(dec)
 	if err != nil {
 		return imap.ErrBad(fmt.Sprintf("invalid literal: %v", err))
+	}
+
+	if isBinary {
+		options.Binary = true
 	}
 
 	// Read the literal body from the connection's main decoder
@@ -405,6 +409,44 @@ func readLiteralSize(dec *wire.Decoder) (int64, error) {
 	}
 
 	return size, nil
+}
+
+// readLiteralSizeBinary is like readLiteralSize but also detects ~{N} binary
+// literals (RFC 3516). Returns the size, whether it's binary, and any error.
+func readLiteralSizeBinary(dec *wire.Decoder) (int64, bool, error) {
+	var sb strings.Builder
+	for {
+		b, err := dec.PeekByte()
+		if err != nil {
+			break
+		}
+		if err := dec.ExpectByte(b); err != nil {
+			break
+		}
+		sb.WriteByte(b)
+	}
+
+	s := strings.TrimSpace(sb.String())
+
+	binary := false
+	if strings.HasPrefix(s, "~") {
+		binary = true
+		s = s[1:]
+	}
+
+	if !strings.HasPrefix(s, "{") || !strings.HasSuffix(s, "}") {
+		return 0, false, fmt.Errorf("expected literal, got %q", s)
+	}
+
+	inner := s[1 : len(s)-1]
+	inner = strings.TrimSuffix(inner, "+")
+
+	size, err := strconv.ParseInt(inner, 10, 64)
+	if err != nil {
+		return 0, false, fmt.Errorf("invalid literal size %q: %w", inner, err)
+	}
+
+	return size, binary, nil
 }
 
 // parseDate attempts to parse an IMAP internal date string.

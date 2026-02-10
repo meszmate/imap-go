@@ -32,6 +32,12 @@ type FetchOptions struct {
 	// ThreadID fetches the thread ID (RFC 8474).
 	ThreadID bool
 
+	// BinarySection specifies BINARY[] and BINARY.PEEK[] sections to fetch (RFC 3516).
+	BinarySection []*FetchItemBinarySection
+	// BinarySizeSection specifies BINARY.SIZE[] sections to fetch (RFC 3516).
+	// Each entry is a MIME part number list (e.g., []int{1, 2} for part "1.2").
+	BinarySizeSection [][]int
+
 	// ChangedSince only fetches messages with a mod-sequence greater than this value.
 	ChangedSince uint64
 	// Vanished requests VANISHED responses instead of EXPUNGE (QRESYNC).
@@ -54,6 +60,22 @@ type FetchItemBodySection struct {
 	Partial *SectionPartial
 }
 
+// FetchItemBinarySection represents a BINARY[] or BINARY.PEEK[] fetch item (RFC 3516).
+type FetchItemBinarySection struct {
+	// Part is the MIME part number (e.g., []int{1, 2} for "1.2").
+	Part []int
+	// Peek prevents setting the \Seen flag (BINARY.PEEK).
+	Peek bool
+	// Partial is the partial byte range.
+	Partial *SectionPartial
+}
+
+// BinarySizeData represents a BINARY.SIZE response item (RFC 3516).
+type BinarySizeData struct {
+	Part []int
+	Size uint32
+}
+
 // FetchMessageData represents the data returned for a single message in FETCH.
 type FetchMessageData struct {
 	// SeqNum is the message sequence number.
@@ -74,6 +96,11 @@ type FetchMessageData struct {
 
 	// BodySection contains the fetched body sections.
 	BodySection map[*FetchItemBodySection]SectionReader
+
+	// BinarySection contains the fetched binary sections (RFC 3516).
+	BinarySection map[*FetchItemBinarySection]SectionReader
+	// BinarySizeSection contains the sizes for BINARY.SIZE requests (RFC 3516).
+	BinarySizeSection []BinarySizeData
 }
 
 // SectionReader is a reader for a FETCH body section.
@@ -99,4 +126,9 @@ type FetchMessageBuffer struct {
 
 	// BodySection maps section names to their content.
 	BodySection map[string][]byte
+
+	// BinarySection maps part strings (e.g., "1.2") to decoded binary content.
+	BinarySection map[string][]byte
+	// BinarySizeSection maps part strings to decoded sizes.
+	BinarySizeSection map[string]uint32
 }

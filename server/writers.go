@@ -1,6 +1,9 @@
 package server
 
 import (
+	"io"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -110,6 +113,20 @@ func (w *FetchWriter) WriteFetchData(data *imap.FetchMessageData) {
 		if data.Preview != "" {
 			sp()
 			enc.Atom("PREVIEW").SP().String(data.Preview)
+		}
+
+		// Write BINARY sections (RFC 3516)
+		for section, reader := range data.BinarySection {
+			sp()
+			enc.Atom("BINARY[" + formatPart(section.Part) + "]").SP()
+			binaryData, _ := io.ReadAll(reader.Reader)
+			enc.BinaryLiteral(binaryData)
+		}
+
+		// Write BINARY.SIZE sections (RFC 3516)
+		for _, bs := range data.BinarySizeSection {
+			sp()
+			enc.Atom("BINARY.SIZE[" + formatPart(bs.Part) + "]").SP().Number(bs.Size)
 		}
 
 		enc.EndList().CRLF()
@@ -316,6 +333,18 @@ func (w *ListWriter) WriteList(data *imap.ListData) {
 			enc.EndList().CRLF()
 		})
 	}
+}
+
+// formatPart formats a MIME part number list (e.g., []int{1, 2}) as "1.2".
+func formatPart(part []int) string {
+	if len(part) == 0 {
+		return ""
+	}
+	s := make([]string, len(part))
+	for i, p := range part {
+		s[i] = strconv.Itoa(p)
+	}
+	return strings.Join(s, ".")
 }
 
 // hasExtendedData returns true if any extended data fields are set in ListData.

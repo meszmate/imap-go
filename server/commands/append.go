@@ -94,13 +94,17 @@ func Append() server.CommandHandlerFunc {
 		}
 
 		// Parse literal size from the rest of the arguments.
-		// The literal info looks like {42} or {42+} at the end of the line.
+		// The literal info looks like {42}, {42+}, or ~{42} at the end of the line.
 		// Since the arg decoder is built from the line remainder (after CRLF
 		// stripping), we parse the literal header here and then read the
 		// actual data from the connection's main decoder.
-		litSize, err := readLiteralSize(ctx.Decoder)
+		litSize, isBinary, err := readLiteralSize(ctx.Decoder)
 		if err != nil {
 			return imap.ErrBad(fmt.Sprintf("invalid literal: %v", err))
+		}
+
+		if isBinary {
+			options.Binary = true
 		}
 
 		// Read the literal body from the connection's main decoder
@@ -135,10 +139,11 @@ func Append() server.CommandHandlerFunc {
 	}
 }
 
-// readLiteralSize reads a literal size specification like {42} or {42+}
+// readLiteralSize reads a literal size specification like {42}, {42+}, or ~{42}
 // from the decoder, without expecting a trailing CRLF (since the arg
 // decoder is built from an already-parsed line).
-func readLiteralSize(dec *wire.Decoder) (int64, error) {
+// Returns the size, whether it's a binary literal (~{N}), and any error.
+func readLiteralSize(dec *wire.Decoder) (int64, bool, error) {
 	// Read remaining content as a string to parse the literal spec
 	var sb strings.Builder
 	for {
@@ -154,9 +159,15 @@ func readLiteralSize(dec *wire.Decoder) (int64, error) {
 
 	s := strings.TrimSpace(sb.String())
 
+	binary := false
+	if strings.HasPrefix(s, "~") {
+		binary = true
+		s = s[1:]
+	}
+
 	// Expect format: {number} or {number+}
 	if !strings.HasPrefix(s, "{") || !strings.HasSuffix(s, "}") {
-		return 0, fmt.Errorf("expected literal, got %q", s)
+		return 0, false, fmt.Errorf("expected literal, got %q", s)
 	}
 
 	inner := s[1 : len(s)-1]
@@ -164,8 +175,8 @@ func readLiteralSize(dec *wire.Decoder) (int64, error) {
 
 	size, err := strconv.ParseInt(inner, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("invalid literal size %q: %w", inner, err)
+		return 0, false, fmt.Errorf("invalid literal size %q: %w", inner, err)
 	}
 
-	return size, nil
+	return size, binary, nil
 }
