@@ -152,9 +152,9 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **LIST-MYRIGHTS** (RFC 8440) — Handled via LIST-EXTENDED RETURN (MYRIGHTS) option
 - [x] **LIST-METADATA** (RFC 9590) — Handled via LIST-EXTENDED RETURN (METADATA) option
 - [x] **SPECIAL-USE** (RFC 6154) — CREATE WrapHandler with USE attribute parsing; LIST handled via LIST-EXTENDED
+- [x] **BINARY** (RFC 3516) — BINARY[]/BINARY.PEEK[]/BINARY.SIZE[] fetch items, binary literal ~{N} APPEND support
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [x] **BINARY** (RFC 3516) — BINARY[]/BINARY.PEEK[]/BINARY.SIZE[] fetch items, binary literal ~{N} APPEND support
 - [ ] **SEARCHRES** (RFC 5182) — TODO: wire SAVE/$ result references
 - [ ] **SEARCH=FUZZY** (RFC 6203) — TODO: wrap SEARCH for FUZZY modifier
 - [ ] **PARTIAL** (RFC 9394) — TODO: wrap SEARCH/SORT for PARTIAL return option
