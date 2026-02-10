@@ -430,7 +430,7 @@ func TestHandleDollarStore_WithDollar(t *testing.T) {
 	ext := New()
 	h := ext.WrapHandler("STORE", dummyHandler).(server.CommandHandlerFunc)
 
-	ctx := newTestCtx(t, "$ +FLAGS (\\Seen)", sess)
+	ctx := newTestCtx(t, "$ +FLAGS (Seen)", sess)
 	ctx.Name = "STORE"
 
 	if err := h.Handle(ctx); err != nil {
