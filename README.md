@@ -155,12 +155,12 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **BINARY** (RFC 3516) — BINARY[]/BINARY.PEEK[]/BINARY.SIZE[] fetch items, binary literal ~{N} APPEND support
 - [x] **SEARCHRES** (RFC 5182) — SEARCH RETURN (SAVE) with result saving, $ reference in FETCH/STORE/COPY/MOVE sequence sets and SEARCH criteria
 - [x] **PARTIAL** (RFC 9394) — SEARCH/SORT RETURN (PARTIAL offset:count) with paginated results in ESEARCH response format
+- [x] **SEARCH=FUZZY** (RFC 6203) — SEARCH WrapHandler with FUZZY modifier parsing, session routing to SearchFuzzy/SearchExtended/Search
+- [x] **UTF8=ACCEPT** (RFC 6855) — ENABLE WrapHandler for session notification, APPEND WrapHandler with UTF8 (~{N+}) literal parsing
+- [x] **UIDONLY** (RFC 9586) — ENABLE WrapHandler with UIDREQUIRED rejection for seq-number commands, UIDFETCH/VANISHED response rewrites
+- [x] **MULTIAPPEND** (RFC 3502) — APPEND WrapHandler with multi-message detection, atomic append via SessionMultiAppend
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **SEARCH=FUZZY** (RFC 6203) — TODO: wrap SEARCH for FUZZY modifier
-- [ ] **UTF8=ACCEPT** (RFC 6855) — TODO: OnEnabled + wrap AUTHENTICATE/SELECT/APPEND
-- [ ] **UIDONLY** (RFC 9586) — TODO: OnEnabled + suppress sequence numbers in responses
-- [ ] **MULTIAPPEND** (RFC 3502) — TODO: wrap APPEND for multi-message detection
 - [ ] **ESORT** (RFC 5267) — TODO: wrap SORT for extended return options
 - [ ] **CONTEXT** (RFC 5267) — TODO: wrap SEARCH/SORT for CONTEXT/UPDATE
 - [ ] **MULTISEARCH** (RFC 7377) — TODO: multi-mailbox SEARCH

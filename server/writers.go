@@ -32,7 +32,8 @@ func (re *ResponseEncoder) Encode(fn func(enc *wire.Encoder)) {
 
 // FetchWriter writes FETCH response data.
 type FetchWriter struct {
-	enc *ResponseEncoder
+	enc     *ResponseEncoder
+	uidOnly bool
 }
 
 // NewFetchWriter creates a new FetchWriter.
@@ -40,22 +41,40 @@ func NewFetchWriter(enc *ResponseEncoder) *FetchWriter {
 	return &FetchWriter{enc: enc}
 }
 
+// SetUIDOnly enables UIDONLY mode where responses use UIDFETCH with UIDs
+// instead of FETCH with sequence numbers (RFC 9586).
+func (w *FetchWriter) SetUIDOnly(enabled bool) {
+	w.uidOnly = enabled
+}
+
 // WriteFlags writes a FETCH FLAGS response.
+// In UIDONLY mode, seqNum is treated as a UID and UIDFETCH is used.
 func (w *FetchWriter) WriteFlags(seqNum uint32, flags []imap.Flag) {
 	flagStrs := make([]string, len(flags))
 	for i, f := range flags {
 		flagStrs[i] = string(f)
 	}
+	keyword := "FETCH"
+	if w.uidOnly {
+		keyword = "UIDFETCH"
+	}
 	w.enc.Encode(func(enc *wire.Encoder) {
-		enc.Star().Number(seqNum).SP().Atom("FETCH").SP().
+		enc.Star().Number(seqNum).SP().Atom(keyword).SP().
 			BeginList().Atom("FLAGS").SP().Flags(flagStrs).EndList().CRLF()
 	})
 }
 
 // WriteFetchData writes a complete FETCH response for a message.
+// In UIDONLY mode, uses the UID as the message number and UIDFETCH as the keyword.
 func (w *FetchWriter) WriteFetchData(data *imap.FetchMessageData) {
 	w.enc.Encode(func(enc *wire.Encoder) {
-		enc.Star().Number(data.SeqNum).SP().Atom("FETCH").SP().BeginList()
+		num := data.SeqNum
+		keyword := "FETCH"
+		if w.uidOnly {
+			num = uint32(data.UID)
+			keyword = "UIDFETCH"
+		}
+		enc.Star().Number(num).SP().Atom(keyword).SP().BeginList()
 
 		first := true
 		sp := func() {
@@ -408,7 +427,8 @@ func (w *UpdateWriter) WriteMessageFlags(seqNum uint32, flags []imap.Flag) {
 
 // ExpungeWriter writes EXPUNGE responses.
 type ExpungeWriter struct {
-	enc *ResponseEncoder
+	enc     *ResponseEncoder
+	uidOnly bool
 }
 
 // NewExpungeWriter creates a new ExpungeWriter.
@@ -416,8 +436,22 @@ func NewExpungeWriter(enc *ResponseEncoder) *ExpungeWriter {
 	return &ExpungeWriter{enc: enc}
 }
 
+// SetUIDOnly enables UIDONLY mode where VANISHED responses are emitted
+// instead of EXPUNGE (RFC 9586). When enabled, the num parameter to
+// WriteExpunge is treated as a UID.
+func (w *ExpungeWriter) SetUIDOnly(enabled bool) {
+	w.uidOnly = enabled
+}
+
 // WriteExpunge writes an EXPUNGE response for a sequence number.
+// In UIDONLY mode, emits * VANISHED <uid> instead.
 func (w *ExpungeWriter) WriteExpunge(seqNum uint32) {
+	if w.uidOnly {
+		w.enc.Encode(func(enc *wire.Encoder) {
+			enc.Star().Atom("VANISHED").SP().Atom(strconv.FormatUint(uint64(seqNum), 10)).CRLF()
+		})
+		return
+	}
 	w.enc.Encode(func(enc *wire.Encoder) {
 		enc.NumResponse(seqNum, "EXPUNGE")
 	})
@@ -435,6 +469,12 @@ func NewMoveWriter(enc *ResponseEncoder) *MoveWriter {
 		expunge: NewExpungeWriter(enc),
 		enc:     enc,
 	}
+}
+
+// SetUIDOnly enables UIDONLY mode on the MoveWriter's expunge output,
+// emitting VANISHED instead of EXPUNGE (RFC 9586).
+func (w *MoveWriter) SetUIDOnly(enabled bool) {
+	w.expunge.SetUIDOnly(enabled)
 }
 
 // WriteExpunge writes an EXPUNGE response.

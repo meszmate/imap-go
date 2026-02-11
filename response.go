@@ -57,6 +57,7 @@ const (
 	ResponseCodeMailboxID      ResponseCode = "MAILBOXID"
 	ResponseCodeObjectID       ResponseCode = "OBJECTID"
 	ResponseCodeInProgress     ResponseCode = "INPROGRESS"
+	ResponseCodeUIDRequired    ResponseCode = "UIDREQUIRED"
 )
 
 // StatusResponse represents an IMAP status response.
@@ -118,6 +119,15 @@ func ErrNo(text string) *IMAPError {
 func ErrNoWithCode(code ResponseCode, text string) *IMAPError {
 	return &IMAPError{&StatusResponse{
 		Type: StatusResponseTypeNO,
+		Code: code,
+		Text: text,
+	}}
+}
+
+// ErrBadWithCode creates a BAD error with a response code.
+func ErrBadWithCode(code ResponseCode, text string) *IMAPError {
+	return &IMAPError{&StatusResponse{
+		Type: StatusResponseTypeBAD,
 		Code: code,
 		Text: text,
 	}}

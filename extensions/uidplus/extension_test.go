@@ -50,8 +50,8 @@ func newTestCommandContext(t *testing.T, args string, sess server.Session) *serv
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -89,8 +89,8 @@ func newTestCommandContextCapture(t *testing.T, args string, sess server.Session
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -247,7 +247,7 @@ func TestCopy_COPYUID_ResponseCode(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -439,7 +439,7 @@ func TestCopy_PlainOK_NoCOPYUID(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()

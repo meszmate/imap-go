@@ -10,6 +10,8 @@ type AppendOptions struct {
 	InternalDate time.Time
 	// Binary indicates the message was sent using binary literal (~{N}) notation (RFC 3516).
 	Binary bool
+	// UTF8 indicates the message was sent using UTF8 literal notation (RFC 6855).
+	UTF8 bool
 }
 
 // AppendData represents the result of an APPEND command.

@@ -98,8 +98,8 @@ func newTestCtx(t *testing.T, name, args string, sess server.Session) *server.Co
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -135,8 +135,8 @@ func newTestCtxWithOutput(t *testing.T, name, args string, sess server.Session) 
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -395,7 +395,7 @@ func TestSearch_PartialResponse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -432,7 +432,7 @@ func TestSearch_PartialEmptyResult(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -472,7 +472,7 @@ func TestSearch_PartialNegativeOffset(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if gotOpts == nil || gotOpts.ReturnPartial == nil {
@@ -580,7 +580,7 @@ func TestSearch_WithoutReturn(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -631,7 +631,7 @@ func TestSort_WithReturnPartial(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if !sess.sortExtendedCalled {
@@ -748,7 +748,7 @@ func TestSearch_PartialWithCount(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -786,7 +786,7 @@ func TestSearch_UIDKind(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()

@@ -41,8 +41,8 @@ func newTestCommandContext(t *testing.T, args string, sess server.Session) *serv
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -360,8 +360,8 @@ func TestSelect_VanishedEarlierResponse(t *testing.T) {
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -400,7 +400,7 @@ func TestSelect_VanishedEarlierResponse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
