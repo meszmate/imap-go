@@ -42,15 +42,15 @@ func newTestCtx(t *testing.T, args string, sess server.Session) *server.CommandC
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
 
 	// Drain responses from server
 	go func() {
-		io.Copy(io.Discard, clientConn)
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	var dec *wire.Decoder
@@ -78,8 +78,8 @@ func newPipeCtx(t *testing.T, args string, sess server.Session) (*server.Command
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -110,8 +110,8 @@ func newPipeCtxWithOutput(t *testing.T, args string, sess server.Session) (*serv
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -275,9 +275,9 @@ func TestSingleAppend_LiteralOnly(t *testing.T) {
 
 	// Write literal body + CRLF, then drain responses
 	go func() {
-		clientConn.Write([]byte(msgContent + "\r\n"))
+		_, _ = clientConn.Write([]byte(msgContent + "\r\n"))
 		// Drain server responses to prevent deadlock
-		io.Copy(io.Discard, clientConn)
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	if err := h.Handle(ctx); err != nil {
@@ -319,8 +319,8 @@ func TestSingleAppend_WithFlagsAndDate(t *testing.T) {
 	ctx, clientConn := newPipeCtx(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msgContent + "\r\n"))
-		io.Copy(io.Discard, clientConn)
+		_, _ = clientConn.Write([]byte(msgContent + "\r\n"))
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	if err := h.Handle(ctx); err != nil {
@@ -348,7 +348,7 @@ func TestSingleAppend_WithFlagsOnly(t *testing.T) {
 	sess := &mock.Session{}
 	sess.AppendFunc = func(mailbox string, r imap.LiteralReader, options *imap.AppendOptions) (*imap.AppendData, error) {
 		gotFlags = options.Flags
-		io.ReadAll(r.Reader)
+		_, _ = io.ReadAll(r.Reader)
 		return &imap.AppendData{UIDValidity: 1, UID: 10}, nil
 	}
 
@@ -358,8 +358,8 @@ func TestSingleAppend_WithFlagsOnly(t *testing.T) {
 	ctx, clientConn := newPipeCtx(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte("test\r\n"))
-		io.Copy(io.Discard, clientConn)
+		_, _ = clientConn.Write([]byte("test\r\n"))
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	if err := h.Handle(ctx); err != nil {
@@ -376,7 +376,7 @@ func TestSingleAppend_APPENDUID_Response(t *testing.T) {
 
 	sess := &mock.Session{}
 	sess.AppendFunc = func(mailbox string, r imap.LiteralReader, options *imap.AppendOptions) (*imap.AppendData, error) {
-		io.ReadAll(r.Reader)
+		_, _ = io.ReadAll(r.Reader)
 		return &imap.AppendData{UIDValidity: 42, UID: 100}, nil
 	}
 
@@ -387,14 +387,14 @@ func TestSingleAppend_APPENDUID_Response(t *testing.T) {
 	ctx, clientConn, outBuf, done := newPipeCtxWithOutput(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg + "\r\n"))
+		_, _ = clientConn.Write([]byte(msg + "\r\n"))
 	}()
 
 	if err := h.Handle(ctx); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -408,7 +408,7 @@ func TestSingleAppend_NoAPPENDUID(t *testing.T) {
 
 	sess := &mock.Session{}
 	sess.AppendFunc = func(mailbox string, r imap.LiteralReader, options *imap.AppendOptions) (*imap.AppendData, error) {
-		io.ReadAll(r.Reader)
+		_, _ = io.ReadAll(r.Reader)
 		return &imap.AppendData{}, nil
 	}
 
@@ -419,14 +419,14 @@ func TestSingleAppend_NoAPPENDUID(t *testing.T) {
 	ctx, clientConn, outBuf, done := newPipeCtxWithOutput(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg + "\r\n"))
+		_, _ = clientConn.Write([]byte(msg + "\r\n"))
 	}()
 
 	if err := h.Handle(ctx); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -464,10 +464,10 @@ func TestMultiAppend_TwoMessages(t *testing.T) {
 	ctx, clientConn := newPipeCtx(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg1))
-		fmt.Fprintf(clientConn, " (Flagged) {%d+}\r\n", len(msg2))
-		clientConn.Write([]byte(msg2 + "\r\n"))
-		io.Copy(io.Discard, clientConn)
+		_, _ = clientConn.Write([]byte(msg1))
+		_, _ = fmt.Fprintf(clientConn, " (Flagged) {%d+}\r\n", len(msg2))
+		_, _ = clientConn.Write([]byte(msg2 + "\r\n"))
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	if err := h.Handle(ctx); err != nil {
@@ -524,12 +524,12 @@ func TestMultiAppend_ThreeMessages(t *testing.T) {
 	ctx, clientConn := newPipeCtx(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg1))
-		fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
-		clientConn.Write([]byte(msg2))
-		fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg3))
-		clientConn.Write([]byte(msg3 + "\r\n"))
-		io.Copy(io.Discard, clientConn)
+		_, _ = clientConn.Write([]byte(msg1))
+		_, _ = fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
+		_, _ = clientConn.Write([]byte(msg2))
+		_, _ = fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg3))
+		_, _ = clientConn.Write([]byte(msg3 + "\r\n"))
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	if err := h.Handle(ctx); err != nil {
@@ -570,16 +570,16 @@ func TestMultiAppend_APPENDUID_Response(t *testing.T) {
 	ctx, clientConn, outBuf, done := newPipeCtxWithOutput(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg1))
-		fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
-		clientConn.Write([]byte(msg2 + "\r\n"))
+		_, _ = clientConn.Write([]byte(msg1))
+		_, _ = fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
+		_, _ = clientConn.Write([]byte(msg2 + "\r\n"))
 	}()
 
 	if err := h.Handle(ctx); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -595,7 +595,7 @@ func TestMultiAppend_NoSessionInterface(t *testing.T) {
 
 	sess := &mock.Session{}
 	sess.AppendFunc = func(mailbox string, r imap.LiteralReader, options *imap.AppendOptions) (*imap.AppendData, error) {
-		io.ReadAll(r.Reader)
+		_, _ = io.ReadAll(r.Reader)
 		return &imap.AppendData{}, nil
 	}
 
@@ -608,16 +608,16 @@ func TestMultiAppend_NoSessionInterface(t *testing.T) {
 	ctx, clientConn, outBuf, done := newPipeCtxWithOutput(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg1))
-		fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
-		clientConn.Write([]byte(msg2 + "\r\n"))
+		_, _ = clientConn.Write([]byte(msg1))
+		_, _ = fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
+		_, _ = clientConn.Write([]byte(msg2 + "\r\n"))
 	}()
 
 	if err := h.Handle(ctx); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -636,7 +636,7 @@ func TestSingleAppend_SessionError(t *testing.T) {
 
 	sess := &mock.Session{}
 	sess.AppendFunc = func(mailbox string, r imap.LiteralReader, options *imap.AppendOptions) (*imap.AppendData, error) {
-		io.ReadAll(r.Reader)
+		_, _ = io.ReadAll(r.Reader)
 		return nil, imap.ErrNo("mailbox full")
 	}
 
@@ -647,8 +647,8 @@ func TestSingleAppend_SessionError(t *testing.T) {
 	ctx, clientConn := newPipeCtx(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg + "\r\n"))
-		io.Copy(io.Discard, clientConn)
+		_, _ = clientConn.Write([]byte(msg + "\r\n"))
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	err := h.Handle(ctx)
@@ -677,10 +677,10 @@ func TestMultiAppend_AppendMultiError(t *testing.T) {
 	ctx, clientConn := newPipeCtx(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg1))
-		fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
-		clientConn.Write([]byte(msg2 + "\r\n"))
-		io.Copy(io.Discard, clientConn)
+		_, _ = clientConn.Write([]byte(msg1))
+		_, _ = fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
+		_, _ = clientConn.Write([]byte(msg2 + "\r\n"))
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	err := h.Handle(ctx)
@@ -766,8 +766,8 @@ func TestParseDate_Invalid(t *testing.T) {
 
 func TestWriteMultiAppendOK_AllValid(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 
@@ -799,7 +799,7 @@ func TestWriteMultiAppendOK_AllValid(t *testing.T) {
 	}
 
 	writeMultiAppendOK(ctx, results)
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -810,8 +810,8 @@ func TestWriteMultiAppendOK_AllValid(t *testing.T) {
 
 func TestWriteMultiAppendOK_NilResults(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 
@@ -837,7 +837,7 @@ func TestWriteMultiAppendOK_NilResults(t *testing.T) {
 	}
 
 	writeMultiAppendOK(ctx, nil)
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -851,8 +851,8 @@ func TestWriteMultiAppendOK_NilResults(t *testing.T) {
 
 func TestWriteMultiAppendOK_ZeroUID(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 
@@ -883,7 +883,7 @@ func TestWriteMultiAppendOK_ZeroUID(t *testing.T) {
 	}
 
 	writeMultiAppendOK(ctx, results)
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -917,10 +917,10 @@ func TestMultiAppend_WithDate(t *testing.T) {
 	ctx, clientConn := newPipeCtx(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg1))
-		fmt.Fprintf(clientConn, " (Flagged) \"02-Jan-2006 15:04:05 -0700\" {%d+}\r\n", len(msg2))
-		clientConn.Write([]byte(msg2 + "\r\n"))
-		io.Copy(io.Discard, clientConn)
+		_, _ = clientConn.Write([]byte(msg1))
+		_, _ = fmt.Fprintf(clientConn, " (Flagged) \"02-Jan-2006 15:04:05 -0700\" {%d+}\r\n", len(msg2))
+		_, _ = clientConn.Write([]byte(msg2 + "\r\n"))
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	if err := h.Handle(ctx); err != nil {
@@ -971,10 +971,10 @@ func TestMultiAppend_NoFlagsNoDate(t *testing.T) {
 	ctx, clientConn := newPipeCtx(t, args, sess)
 
 	go func() {
-		clientConn.Write([]byte(msg1))
-		fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
-		clientConn.Write([]byte(msg2 + "\r\n"))
-		io.Copy(io.Discard, clientConn)
+		_, _ = clientConn.Write([]byte(msg1))
+		_, _ = fmt.Fprintf(clientConn, " {%d+}\r\n", len(msg2))
+		_, _ = clientConn.Write([]byte(msg2 + "\r\n"))
+		_, _ = io.Copy(io.Discard, clientConn)
 	}()
 
 	if err := h.Handle(ctx); err != nil {

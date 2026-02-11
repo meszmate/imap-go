@@ -43,8 +43,8 @@ func newTestCommandContext(t *testing.T, args string, sess server.Session) *serv
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)

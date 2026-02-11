@@ -58,8 +58,8 @@ func newTestCtx(t *testing.T, name, args string, sess server.Session) *server.Co
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -95,8 +95,8 @@ func newTestCtxWithOutput(t *testing.T, name, args string, sess server.Session) 
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -396,7 +396,7 @@ func TestFetch_UIDOnly_UIFetchResponse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -516,7 +516,7 @@ func TestStore_UIDOnly_UIFetchResponse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -631,7 +631,7 @@ func TestExpunge_UIDOnly_VanishedResponse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -713,7 +713,7 @@ func TestMove_UIDOnly_VanishedResponse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -912,8 +912,8 @@ func TestHasQResyncSeqMatch(t *testing.T) {
 
 func TestFetchWriter_WriteFlags_UIDOnly(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 
@@ -951,8 +951,8 @@ func TestFetchWriter_WriteFlags_UIDOnly(t *testing.T) {
 
 func TestFetchWriter_WriteFlags_Normal(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 
@@ -992,8 +992,8 @@ func TestFetchWriter_WriteFlags_Normal(t *testing.T) {
 
 func TestExpungeWriter_UIDOnly(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 
@@ -1031,8 +1031,8 @@ func TestExpungeWriter_UIDOnly(t *testing.T) {
 
 func TestExpungeWriter_Normal(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 

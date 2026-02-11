@@ -42,8 +42,8 @@ func newTestCommandContext(t *testing.T, args string, sess server.Session) *serv
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -81,8 +81,8 @@ func newTestCommandContextWithOutput(t *testing.T, args string, sess server.Sess
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -215,7 +215,7 @@ func TestSearch_WithReturnAllCount(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -248,7 +248,7 @@ func TestSearch_WithEmptyReturn(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if gotOpts == nil {
@@ -287,7 +287,7 @@ func TestSearch_WithoutReturn(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if gotOpts == nil {
@@ -373,8 +373,8 @@ func TestUIDSearch_ESearchResponse(t *testing.T) {
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -409,7 +409,7 @@ func TestUIDSearch_ESearchResponse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -436,8 +436,8 @@ func TestSearch_ESearchResponseFormat(t *testing.T) {
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -472,7 +472,7 @@ func TestSearch_ESearchResponseFormat(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -493,8 +493,8 @@ func TestSearch_NoResults(t *testing.T) {
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -529,7 +529,7 @@ func TestSearch_NoResults(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -664,8 +664,8 @@ func TestSearch_ModSeqInESearchResponse(t *testing.T) {
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -700,7 +700,7 @@ func TestSearch_ModSeqInESearchResponse(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()

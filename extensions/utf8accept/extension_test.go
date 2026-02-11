@@ -37,8 +37,8 @@ func newTestCtx(t *testing.T, name, args string, sess server.Session) *server.Co
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -78,8 +78,8 @@ func newTestCtxWithConn(t *testing.T, name, argLine, wireData string, sess serve
 
 	clientConn, serverConn := net.Pipe()
 	t.Cleanup(func() {
-		clientConn.Close()
-		serverConn.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	})
 
 	conn := server.NewTestConn(serverConn, nil)
@@ -297,7 +297,7 @@ func TestAppend_StandardLiteral_Passthrough(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if gotMailbox != "INBOX" {
@@ -339,7 +339,7 @@ func TestAppend_BinaryLiteral_Passthrough(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if gotOptions == nil {
@@ -382,7 +382,7 @@ func TestAppend_UTF8Literal(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if gotMailbox != "INBOX" {
@@ -415,7 +415,7 @@ func TestAppend_UTF8NotEnabled(t *testing.T) {
 	h := ext.WrapHandler("APPEND", dummyHandler).(server.CommandHandlerFunc)
 	err := h.Handle(ctx)
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if err == nil {
@@ -449,7 +449,7 @@ func TestAppend_UTF8WithFlags(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if gotOptions == nil {
@@ -489,7 +489,7 @@ func TestAppend_UTF8WithFlagsAndDate(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	if gotOptions == nil {
@@ -527,7 +527,7 @@ func TestAppend_UTF8Response(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	ctx.Conn.Close()
+	_ = ctx.Conn.Close()
 	<-done
 
 	output := outBuf.String()

@@ -286,8 +286,8 @@ func TestReadLiteralSize_BinaryNonSync(t *testing.T) {
 
 func TestWriteFetchData_BinarySize(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 	w := server.NewFetchWriter(conn.Encoder())
@@ -317,7 +317,7 @@ func TestWriteFetchData_BinarySize(t *testing.T) {
 	}
 
 	w.WriteFetchData(data)
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -331,8 +331,8 @@ func TestWriteFetchData_BinarySize(t *testing.T) {
 
 func TestWriteFetchData_BinarySection(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 	w := server.NewFetchWriter(conn.Encoder())
@@ -367,7 +367,7 @@ func TestWriteFetchData_BinarySection(t *testing.T) {
 	}
 
 	w.WriteFetchData(data)
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()
@@ -384,8 +384,8 @@ func TestWriteFetchData_BinarySection(t *testing.T) {
 
 func TestWriteFetchData_BinarySizeMultipleParts(t *testing.T) {
 	clientConn, serverConn := net.Pipe()
-	defer clientConn.Close()
-	defer serverConn.Close()
+	defer func() { _ = clientConn.Close() }()
+	defer func() { _ = serverConn.Close() }()
 
 	conn := server.NewTestConn(serverConn, nil)
 	w := server.NewFetchWriter(conn.Encoder())
@@ -414,7 +414,7 @@ func TestWriteFetchData_BinarySizeMultipleParts(t *testing.T) {
 	}
 
 	w.WriteFetchData(data)
-	serverConn.Close()
+	_ = serverConn.Close()
 	<-done
 
 	output := outBuf.String()

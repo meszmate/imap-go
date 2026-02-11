@@ -527,9 +527,10 @@ func extractParenthesized(s string) (string, string) {
 	}
 	depth := 0
 	for i := range s {
-		if s[i] == '(' {
+		switch s[i] {
+		case '(':
 			depth++
-		} else if s[i] == ')' {
+		case ')':
 			depth--
 			if depth == 0 {
 				return s[1:i], s[i+1:]
