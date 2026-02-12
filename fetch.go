@@ -93,9 +93,10 @@ type FetchMessageData struct {
 	ModSeq        uint64
 	Preview    string
 	PreviewNIL bool
-	SaveDate   *time.Time
-	EmailID    string
-	ThreadID   string
+	SaveDate    *time.Time
+	SaveDateNIL bool
+	EmailID     string
+	ThreadID    string
 
 	// BodySection contains the fetched body sections.
 	BodySection map[*FetchItemBodySection]SectionReader
@@ -124,9 +125,10 @@ type FetchMessageBuffer struct {
 	ModSeq        uint64
 	Preview    string
 	PreviewNIL bool
-	SaveDate   *time.Time
-	EmailID    string
-	ThreadID   string
+	SaveDate    *time.Time
+	SaveDateNIL bool
+	EmailID     string
+	ThreadID    string
 
 	// BodySection maps section names to their content.
 	BodySection map[string][]byte

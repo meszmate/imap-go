@@ -163,10 +163,10 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **CONTEXT=SEARCH** (RFC 5267) — SEARCH WrapHandler with RETURN (UPDATE CONTEXT) options, CANCELUPDATE command, ADDTO/REMOVEFROM ESEARCH notifications
 - [x] **MULTISEARCH** (RFC 7377) — ESEARCH command handler with IN (mailboxes/subtree/subtree-one) source, RETURN options, per-mailbox ESEARCH responses with MAILBOX and UIDVALIDITY
 - [x] **PREVIEW** (RFC 8970) — FETCH WrapHandler with PREVIEW (LAZY) modifier parsing, PREVIEW NIL response support
+- [x] **OBJECTID** (RFC 8474) — EMAILID/THREADID in FETCH, MAILBOXID in STATUS and SELECT/EXAMINE response code
+- [x] **SAVEDATE** (RFC 8514) — SAVEDATE in FETCH, SAVEDBEFORE/SAVEDSINCE/SAVEDON in SEARCH
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **OBJECTID** (RFC 8474) — session interface for EMAILID/THREADID/MAILBOXID
-- [ ] **SAVEDATE** (RFC 8514) — session interface for SAVEDATE in FETCH/SEARCH
 - [ ] **STATUS=SIZE** (RFC 8438) — core handles SIZE in STATUS
 
 ### Core-handled (capability advertisement only)

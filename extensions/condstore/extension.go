@@ -380,6 +380,8 @@ func ParseSingleFetchItem(dec *wire.Decoder, options *imap.FetchOptions) error {
 		options.EmailID = true
 	case upper == "THREADID":
 		options.ThreadID = true
+	case upper == "SAVEDATE":
+		options.SaveDate = true
 
 	// BODY with bracket embedded in atom ([ is an atom char)
 	case strings.HasPrefix(upper, "BODY.PEEK["):
@@ -768,6 +770,15 @@ func handleCondstoreSelect(ctx *server.CommandContext, readOnly bool) error {
 		enc.Encode(func(e *wire.Encoder) {
 			e.Star().Atom("OK").SP()
 			e.ResponseCode("HIGHESTMODSEQ", data.HighestModSeq)
+			e.CRLF()
+		})
+	}
+
+	// Write MAILBOXID if present (RFC 8474)
+	if data.MailboxID != "" {
+		enc.Encode(func(e *wire.Encoder) {
+			e.Star().Atom("OK").SP()
+			e.ResponseCode("MAILBOXID", "("+data.MailboxID+")")
 			e.CRLF()
 		})
 	}

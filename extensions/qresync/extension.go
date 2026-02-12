@@ -387,6 +387,15 @@ func writeSelectResponse(ctx *server.CommandContext, mailbox string, data *imap.
 		})
 	}
 
+	// Write MAILBOXID if present (RFC 8474)
+	if data.MailboxID != "" {
+		enc.Encode(func(e *wire.Encoder) {
+			e.Star().Atom("OK").SP()
+			e.ResponseCode("MAILBOXID", "("+data.MailboxID+")")
+			e.CRLF()
+		})
+	}
+
 	// Write VANISHED (EARLIER) if present (QRESYNC)
 	if data.Vanished != nil && !data.Vanished.IsEmpty() {
 		vanished := data.Vanished.String()

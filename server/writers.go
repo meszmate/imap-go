@@ -129,6 +129,14 @@ func (w *FetchWriter) WriteFetchData(data *imap.FetchMessageData) {
 			enc.Atom("THREADID").SP().BeginList().AString(data.ThreadID).EndList()
 		}
 
+		if data.SaveDate != nil {
+			sp()
+			enc.Atom("SAVEDATE").SP().DateTime(*data.SaveDate)
+		} else if data.SaveDateNIL {
+			sp()
+			enc.Atom("SAVEDATE").SP().Nil()
+		}
+
 		if data.Preview != "" {
 			sp()
 			enc.Atom("PREVIEW").SP().String(data.Preview)

@@ -17,6 +17,11 @@ type SearchCriteria struct {
 	SentOn     time.Time
 	On         time.Time
 
+	// SAVEDATE criteria (RFC 8514)
+	SavedBefore time.Time
+	SavedSince  time.Time
+	SavedOn     time.Time
+
 	// Header criteria
 	Header []SearchCriteriaHeaderField
 
