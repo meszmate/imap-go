@@ -25,6 +25,8 @@ type FetchOptions struct {
 	ModSeq bool
 	// Preview fetches the message preview (RFC 8970).
 	Preview bool
+	// PreviewLazy indicates the PREVIEW (LAZY) modifier was used (RFC 8970).
+	PreviewLazy bool
 	// SaveDate fetches the save date (RFC 8514).
 	SaveDate bool
 	// EmailID fetches the email ID (RFC 8474).
@@ -89,10 +91,11 @@ type FetchMessageData struct {
 	RFC822Size    int64
 	UID           UID
 	ModSeq        uint64
-	Preview       string
-	SaveDate      *time.Time
-	EmailID       string
-	ThreadID      string
+	Preview    string
+	PreviewNIL bool
+	SaveDate   *time.Time
+	EmailID    string
+	ThreadID   string
 
 	// BodySection contains the fetched body sections.
 	BodySection map[*FetchItemBodySection]SectionReader
@@ -119,10 +122,11 @@ type FetchMessageBuffer struct {
 	RFC822Size    int64
 	UID           UID
 	ModSeq        uint64
-	Preview       string
-	SaveDate      *time.Time
-	EmailID       string
-	ThreadID      string
+	Preview    string
+	PreviewNIL bool
+	SaveDate   *time.Time
+	EmailID    string
+	ThreadID   string
 
 	// BodySection maps section names to their content.
 	BodySection map[string][]byte

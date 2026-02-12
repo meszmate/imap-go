@@ -132,6 +132,9 @@ func (w *FetchWriter) WriteFetchData(data *imap.FetchMessageData) {
 		if data.Preview != "" {
 			sp()
 			enc.Atom("PREVIEW").SP().String(data.Preview)
+		} else if data.PreviewNIL {
+			sp()
+			enc.Atom("PREVIEW").SP().Nil()
 		}
 
 		// Write BINARY sections (RFC 3516)
