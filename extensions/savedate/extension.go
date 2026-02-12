@@ -1,10 +1,12 @@
 // Package savedate implements the SAVEDATE extension (RFC 8514).
 //
 // SAVEDATE provides the date and time a message was saved to a mailbox as a
-// FETCH data item. The core FETCH handler already handles parsing and writing
-// the SAVEDATE item. This extension advertises the capability and exposes the
-// SessionSaveDate interface for backends that want to provide save dates
-// through a dedicated method.
+// FETCH data item, and adds SAVEDBEFORE/SAVEDSINCE/SAVEDON search criteria.
+// The core FETCH parser handles the SAVEDATE fetch item, WriteFetchData writes
+// SAVEDATE date-time or SAVEDATE NIL responses, and the core and extension
+// search parsers handle SAVEDBEFORE/SAVEDSINCE/SAVEDON criteria. This extension
+// advertises the capability and exposes the SessionSaveDate interface for
+// backends that want to provide save dates through a dedicated method.
 package savedate
 
 import (
@@ -39,12 +41,13 @@ func New() *Extension {
 	}
 }
 
-// CommandHandlers returns nil because the core FETCH handler already
-// handles the SAVEDATE data item.
+// CommandHandlers returns nil — SAVEDATE modifies existing FETCH/SEARCH
+// commands rather than adding new ones.
 func (e *Extension) CommandHandlers() map[string]interface{} { return nil }
 
-// WrapHandler returns nil because the core FETCH handler already
-// handles SAVEDATE parsing and response writing.
+// WrapHandler returns nil — the core FETCH parser handles SAVEDATE item
+// parsing, WriteFetchData writes the response, and the core/extension SEARCH
+// parsers handle SAVEDBEFORE/SAVEDSINCE/SAVEDON criteria.
 func (e *Extension) WrapHandler(name string, handler interface{}) interface{} { return nil }
 
 // SessionExtension returns the SessionSaveDate interface that sessions may

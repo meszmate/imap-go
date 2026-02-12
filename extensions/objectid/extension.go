@@ -1,11 +1,12 @@
 // Package objectid implements the OBJECTID extension (RFC 8474).
 //
 // OBJECTID provides unique identifiers for messages (EMAILID, THREADID) and
-// mailboxes (MAILBOXID). The core FETCH handler already handles parsing and
-// writing EMAILID and THREADID data items, and the core STATUS handler
-// already supports MAILBOXID. This extension advertises the capability and
-// exposes the SessionObjectID interface for backends that want to provide
-// object IDs through a dedicated method.
+// mailboxes (MAILBOXID). The core FETCH handler handles parsing and writing
+// EMAILID and THREADID data items. The core STATUS handler supports MAILBOXID
+// as a STATUS item. The core SELECT/EXAMINE handler and extension SELECT
+// handlers (CONDSTORE, QRESYNC) emit MAILBOXID as a response code when
+// present in SelectData. This extension advertises the capability and exposes
+// the SessionObjectID interface for backends.
 package objectid
 
 import (
@@ -41,8 +42,8 @@ func New() *Extension {
 // already handle EMAILID, THREADID, and MAILBOXID data items.
 func (e *Extension) CommandHandlers() map[string]interface{} { return nil }
 
-// WrapHandler returns nil because the core handlers already support
-// OBJECTID data items.
+// WrapHandler returns nil because the core and extension SELECT/EXAMINE
+// handlers already emit MAILBOXID, and FETCH/STATUS handle EMAILID/THREADID/MAILBOXID.
 func (e *Extension) WrapHandler(name string, handler interface{}) interface{} { return nil }
 
 // SessionExtension returns the SessionObjectID interface that sessions may

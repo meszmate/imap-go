@@ -159,14 +159,14 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **UTF8=ACCEPT** (RFC 6855) — ENABLE WrapHandler for session notification, APPEND WrapHandler with UTF8 (~{N+}) literal parsing
 - [x] **UIDONLY** (RFC 9586) — ENABLE WrapHandler with UIDREQUIRED rejection for seq-number commands, UIDFETCH/VANISHED response rewrites
 - [x] **MULTIAPPEND** (RFC 3502) — APPEND WrapHandler with multi-message detection, atomic append via SessionMultiAppend
+- [x] **ESORT** (RFC 5267) — SORT WrapHandler with RETURN (MIN MAX COUNT ALL SAVE) options, ESEARCH response format
+- [x] **CONTEXT=SEARCH** (RFC 5267) — SEARCH WrapHandler with RETURN (UPDATE CONTEXT) options, CANCELUPDATE command, ADDTO/REMOVEFROM ESEARCH notifications
+- [x] **MULTISEARCH** (RFC 7377) — ESEARCH command handler with IN (mailboxes/subtree/subtree-one) source, RETURN options, per-mailbox ESEARCH responses with MAILBOX and UIDVALIDITY
+- [x] **PREVIEW** (RFC 8970) — FETCH WrapHandler with PREVIEW (LAZY) modifier parsing, PREVIEW NIL response support
+- [x] **OBJECTID** (RFC 8474) — EMAILID/THREADID in FETCH, MAILBOXID in STATUS and SELECT/EXAMINE response code
+- [x] **SAVEDATE** (RFC 8514) — SAVEDATE in FETCH, SAVEDBEFORE/SAVEDSINCE/SAVEDON in SEARCH
 
 ### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **ESORT** (RFC 5267) — TODO: wrap SORT for extended return options
-- [ ] **CONTEXT** (RFC 5267) — TODO: wrap SEARCH/SORT for CONTEXT/UPDATE
-- [ ] **MULTISEARCH** (RFC 7377) — TODO: multi-mailbox SEARCH
-- [ ] **PREVIEW** (RFC 8970) — session interface for FETCH PREVIEW data
-- [ ] **OBJECTID** (RFC 8474) — session interface for EMAILID/THREADID/MAILBOXID
-- [ ] **SAVEDATE** (RFC 8514) — session interface for SAVEDATE in FETCH/SEARCH
 - [ ] **STATUS=SIZE** (RFC 8438) — core handles SIZE in STATUS
 
 ### Core-handled (capability advertisement only)

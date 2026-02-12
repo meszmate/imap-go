@@ -106,6 +106,15 @@ func handleSelect(readOnly bool) server.CommandHandlerFunc {
 			})
 		}
 
+		// Write MAILBOXID if present (RFC 8474)
+		if data.MailboxID != "" {
+			enc.Encode(func(e *wire.Encoder) {
+				e.Star().Atom("OK").SP()
+				e.ResponseCode("MAILBOXID", "("+data.MailboxID+")")
+				e.CRLF()
+			})
+		}
+
 		// Update connection state
 		ctx.Conn.SetMailbox(mailbox, data.ReadOnly)
 		if err := ctx.Conn.SetState(imap.ConnStateSelected); err != nil {

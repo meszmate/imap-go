@@ -58,6 +58,7 @@ const (
 	ResponseCodeObjectID       ResponseCode = "OBJECTID"
 	ResponseCodeInProgress     ResponseCode = "INPROGRESS"
 	ResponseCodeUIDRequired    ResponseCode = "UIDREQUIRED"
+	ResponseCodeNoUpdate       ResponseCode = "NOUPDATE"
 )
 
 // StatusResponse represents an IMAP status response.

@@ -131,6 +131,8 @@ func parseSingleFetchItem(dec *wire.Decoder, options *imap.FetchOptions) error {
 		options.EmailID = true
 	case upper == "THREADID":
 		options.ThreadID = true
+	case upper == "SAVEDATE":
+		options.SaveDate = true
 
 	// BODY with bracket embedded in atom ([ is an atom char)
 	case strings.HasPrefix(upper, "BODY.PEEK["):

@@ -8,7 +8,9 @@
 package esearch
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	imap "github.com/meszmate/imap-go"
 	"github.com/meszmate/imap-go/extension"
@@ -484,6 +486,45 @@ func ParseSearchCriterion(key string, dec *wire.Decoder, criteria *imap.SearchCr
 		}
 		modseqCrit.ModSeq = n
 		criteria.ModSeq = modseqCrit
+	case "SAVEDBEFORE":
+		if err := dec.ReadSP(); err != nil {
+			return err
+		}
+		s, err := dec.ReadAString()
+		if err != nil {
+			return err
+		}
+		t, err := time.Parse("2-Jan-2006", s)
+		if err != nil {
+			return fmt.Errorf("invalid SAVEDBEFORE date: %w", err)
+		}
+		criteria.SavedBefore = t
+	case "SAVEDSINCE":
+		if err := dec.ReadSP(); err != nil {
+			return err
+		}
+		s, err := dec.ReadAString()
+		if err != nil {
+			return err
+		}
+		t, err := time.Parse("2-Jan-2006", s)
+		if err != nil {
+			return fmt.Errorf("invalid SAVEDSINCE date: %w", err)
+		}
+		criteria.SavedSince = t
+	case "SAVEDON":
+		if err := dec.ReadSP(); err != nil {
+			return err
+		}
+		s, err := dec.ReadAString()
+		if err != nil {
+			return err
+		}
+		t, err := time.Parse("2-Jan-2006", s)
+		if err != nil {
+			return fmt.Errorf("invalid SAVEDON date: %w", err)
+		}
+		criteria.SavedOn = t
 	case "NOT":
 		if err := dec.ReadSP(); err != nil {
 			return err
