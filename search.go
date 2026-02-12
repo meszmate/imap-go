@@ -77,6 +77,10 @@ type SearchOptions struct {
 	ReturnCount bool
 	// ReturnSave requests the SAVE result.
 	ReturnSave bool
+	// ReturnContext requests a persistent search context (RFC 5267).
+	ReturnContext bool
+	// ReturnUpdate requests live update notifications (RFC 5267).
+	ReturnUpdate bool
 	// ReturnPartial requests partial results (RFC 9394).
 	ReturnPartial *SearchReturnPartial
 }
@@ -104,6 +108,16 @@ type SearchData struct {
 
 	// Partial results
 	Partial *SearchPartialData
+
+	// CONTEXT=SEARCH notifications (RFC 5267)
+	AddTo      []SearchContextUpdate
+	RemoveFrom []SearchContextUpdate
+}
+
+// SearchContextUpdate represents an ADDTO or REMOVEFROM notification (RFC 5267).
+type SearchContextUpdate struct {
+	Position uint32
+	SeqSet   *SeqSet
 }
 
 // SearchPartialData contains partial search results.
@@ -111,4 +125,11 @@ type SearchPartialData struct {
 	Offset int32  // negative = end-relative (RFC 9394)
 	Total  uint32
 	UIDs   []UID
+}
+
+// MultiSearchResult represents per-mailbox search results from MULTISEARCH (RFC 7377).
+type MultiSearchResult struct {
+	Mailbox     string
+	UIDValidity uint32
+	Data        *SearchData
 }
