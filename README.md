@@ -166,11 +166,8 @@ imaptest/      Test infrastructure (harness + mocks)
 - [x] **OBJECTID** (RFC 8474) — EMAILID/THREADID in FETCH, MAILBOXID in STATUS and SELECT/EXAMINE response code
 - [x] **SAVEDATE** (RFC 8514) — SAVEDATE in FETCH, SAVEDBEFORE/SAVEDSINCE/SAVEDON in SEARCH
 
-### Session interface defined (needs WrapHandler for full protocol support)
-- [ ] **STATUS=SIZE** (RFC 8438) — core handles SIZE in STATUS
-
 ### Core-handled (capability advertisement only)
-
+- [x] **STATUS=SIZE** (RFC 8438) — core handles SIZE in STATUS
 - [x] **IDLE** (RFC 2177) — handled in `server/commands/idle.go`
 - [x] **ENABLE** (RFC 5161) — handled in `server/commands/enable.go`
 - [x] **SASL-IR** (RFC 4959) — handled in `server/commands/authenticate.go`
