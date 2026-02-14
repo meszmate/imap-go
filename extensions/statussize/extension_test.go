@@ -130,3 +130,115 @@ func TestStatus_WithoutSize(t *testing.T) {
 		t.Errorf("response should NOT contain SIZE, got: %s", output)
 	}
 }
+
+func TestStatus_RequestsSizeOption(t *testing.T) {
+	clientConn, serverConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = clientConn.Close()
+		_ = serverConn.Close()
+	})
+
+	conn := server.NewTestConn(serverConn, nil)
+	if err := conn.SetState(imap.ConnStateAuthenticated); err != nil {
+		t.Fatalf("failed to set authenticated state: %v", err)
+	}
+
+	var gotOpts *imap.StatusOptions
+	sess := &mock.Session{
+		StatusFunc: func(mailbox string, options *imap.StatusOptions) (*imap.StatusData, error) {
+			gotOpts = options
+			return &imap.StatusData{Mailbox: mailbox}, nil
+		},
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		buf := make([]byte, 4096)
+		for {
+			if _, err := clientConn.Read(buf); err != nil {
+				return
+			}
+		}
+	}()
+
+	ctx := &server.CommandContext{
+		Context: context.Background(),
+		Tag:     "A001",
+		Name:    "STATUS",
+		NumKind: server.NumKindSeq,
+		Conn:    conn,
+		Session: sess,
+		Decoder: wire.NewDecoder(strings.NewReader("INBOX (SIZE)")),
+	}
+
+	h := commands.Status()
+	if err := h.Handle(ctx); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_ = serverConn.Close()
+	<-done
+
+	if gotOpts == nil {
+		t.Fatal("expected options to be passed to session")
+	}
+	if !gotOpts.Size {
+		t.Fatal("expected options.Size to be true")
+	}
+}
+
+func TestStatus_DoesNotRequestSizeWhenMissing(t *testing.T) {
+	clientConn, serverConn := net.Pipe()
+	t.Cleanup(func() {
+		_ = clientConn.Close()
+		_ = serverConn.Close()
+	})
+
+	conn := server.NewTestConn(serverConn, nil)
+	if err := conn.SetState(imap.ConnStateAuthenticated); err != nil {
+		t.Fatalf("failed to set authenticated state: %v", err)
+	}
+
+	var gotOpts *imap.StatusOptions
+	sess := &mock.Session{
+		StatusFunc: func(mailbox string, options *imap.StatusOptions) (*imap.StatusData, error) {
+			gotOpts = options
+			return &imap.StatusData{Mailbox: mailbox}, nil
+		},
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		buf := make([]byte, 4096)
+		for {
+			if _, err := clientConn.Read(buf); err != nil {
+				return
+			}
+		}
+	}()
+
+	ctx := &server.CommandContext{
+		Context: context.Background(),
+		Tag:     "A001",
+		Name:    "STATUS",
+		NumKind: server.NumKindSeq,
+		Conn:    conn,
+		Session: sess,
+		Decoder: wire.NewDecoder(strings.NewReader("INBOX (MESSAGES)")),
+	}
+
+	h := commands.Status()
+	if err := h.Handle(ctx); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_ = serverConn.Close()
+	<-done
+
+	if gotOpts == nil {
+		t.Fatal("expected options to be passed to session")
+	}
+	if gotOpts.Size {
+		t.Fatal("expected options.Size to be false")
+	}
+}
