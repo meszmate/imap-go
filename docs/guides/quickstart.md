@@ -59,11 +59,38 @@ if err != nil {
     log.Fatal(err)
 }
 
-// Wait for updates (with timeout)
-ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-defer cancel()
-idle.Wait(ctx)
-idle.Done()
+done := make(chan error, 1)
+go func() { done <- idle.Wait() }()
+
+select {
+case err := <-done:
+    if err != nil {
+        log.Printf("IDLE ended: %v", err)
+    }
+case <-time.After(30 * time.Minute):
+    if err := idle.Done(); err != nil {
+        log.Printf("IDLE stop error: %v", err)
+    }
+}
+```
+
+Notes:
+- `idle.Wait()` has no context argument.
+- If the server disconnects (or you call `c.Close()`), `idle.Wait()` returns an error promptly.
+- The same disconnect behavior applies to continuation-based commands like `APPEND` and SASL `AUTHENTICATE`.
+
+### Detect Disconnection Without IDLE
+
+```go
+select {
+case <-c.Done():
+    log.Printf("disconnected: %v", c.DisconnectErr())
+case <-time.After(1 * time.Minute):
+    // Optional heartbeat if you want active probing.
+    if err := c.Noop(); err != nil {
+        log.Printf("NOOP failed: %v", err)
+    }
+}
 ```
 
 ## Server Usage

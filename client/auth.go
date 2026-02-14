@@ -19,12 +19,8 @@ func (c *Client) Login(username, password string) error {
 	if err != nil {
 		return err
 	}
-	if result.status != "OK" {
-		return &imap.IMAPError{StatusResponse: &imap.StatusResponse{
-			Type: imap.StatusResponseType(result.status),
-			Code: imap.ResponseCode(result.code),
-			Text: result.text,
-		}}
+	if err := commandResultError(result); err != nil {
+		return err
 	}
 
 	c.mu.Lock()
@@ -63,7 +59,9 @@ func (c *Client) Authenticate(mechanism imapauth.ClientMechanism) error {
 
 	// If we didn't send IR, wait for the first continuation and send it
 	if ir != nil && !c.HasCap("SASL-IR") {
-		<-c.continuationCh
+		if _, err := c.waitForContinuation(cmd); err != nil {
+			return err
+		}
 		encoded := base64.StdEncoding.EncodeToString(ir)
 		c.encoder.RawString(encoded + "\r\n")
 		if err := c.encoder.Flush(); err != nil {
@@ -74,9 +72,12 @@ func (c *Client) Authenticate(mechanism imapauth.ClientMechanism) error {
 	// Handle challenge-response loop
 	for {
 		select {
-		case contText := <-c.continuationCh:
+		case cont := <-c.continuationCh:
+			if cont.err != nil {
+				return cont.err
+			}
 			// Decode challenge
-			challenge, err := base64.StdEncoding.DecodeString(contText)
+			challenge, err := base64.StdEncoding.DecodeString(cont.text)
 			if err != nil {
 				// Send cancel
 				c.encoder.RawString("*\r\n")
@@ -99,15 +100,8 @@ func (c *Client) Authenticate(mechanism imapauth.ClientMechanism) error {
 			}
 
 		case result := <-cmd.done:
-			if result.err != nil {
-				return result.err
-			}
-			if result.status != "OK" {
-				return &imap.IMAPError{StatusResponse: &imap.StatusResponse{
-					Type: imap.StatusResponseType(result.status),
-					Code: imap.ResponseCode(result.code),
-					Text: result.text,
-				}}
+			if err := commandResultError(result); err != nil {
+				return err
 			}
 			c.mu.Lock()
 			c.state = imap.ConnStateAuthenticated

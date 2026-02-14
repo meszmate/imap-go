@@ -1,7 +1,9 @@
 package client
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -10,30 +12,27 @@ import (
 
 // reader is the background goroutine that reads responses from the server.
 type reader struct {
-	decoder  *wire.Decoder
-	client   *Client
-	stopCh   chan struct{}
+	decoder *wire.Decoder
+	client  *Client
 }
 
 func newReader(decoder *wire.Decoder, c *Client) *reader {
 	return &reader{
 		decoder: decoder,
 		client:  c,
-		stopCh:  make(chan struct{}),
 	}
 }
 
 // run reads and dispatches server responses until the connection is closed.
 func (r *reader) run() {
-	defer func() {
-		close(r.stopCh)
-		r.client.pending.CompleteAll(fmt.Errorf("connection closed"))
-	}()
-
 	for {
 		line, err := r.decoder.ReadLine()
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				err = io.ErrUnexpectedEOF
+			}
 			r.client.options.Logger.Debug("reader error", "error", err)
+			r.client.handleDisconnect(err)
 			return
 		}
 

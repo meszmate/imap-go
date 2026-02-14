@@ -41,6 +41,7 @@ IMAP client with command pipelining. Key components:
 - **Reader** - Background goroutine for response processing
 - **Tag generator** - Atomic counter for command tags
 - **Pending commands** - Track in-flight pipelined commands
+- **Disconnect propagation** - On close/EOF, all pending and continuation-waiting operations are failed quickly to avoid hangs
 
 ### Extension System (`extension/`)
 
