@@ -7,6 +7,7 @@ package client
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -27,25 +28,33 @@ type Client struct {
 	pending *pendingCommands
 	reader  *reader
 
-	mu                  sync.Mutex
-	state               imap.ConnState
-	caps                []string
-	mailboxName         string
-	mailboxMessages     uint32
-	mailboxRecent       uint32
-	mailboxUIDValidity  uint32
-	mailboxUIDNext      uint32
-	mailboxUnseen       uint32
-	mailboxReadOnly     bool
+	mu                 sync.Mutex
+	state              imap.ConnState
+	caps               []string
+	mailboxName        string
+	mailboxMessages    uint32
+	mailboxRecent      uint32
+	mailboxUIDValidity uint32
+	mailboxUIDNext     uint32
+	mailboxUnseen      uint32
+	mailboxReadOnly    bool
 
 	// untaggedData collects untagged responses for the current command
 	untaggedMu   sync.Mutex
 	untaggedData []string
 
 	// continuationCh is used to signal continuation requests to waiting commands
-	continuationCh chan string
+	continuationCh chan continuation
 
-	closed bool
+	closed         bool
+	disconnectOnce sync.Once
+	disconnectCh   chan struct{}
+	disconnectErr  error
+}
+
+type continuation struct {
+	text string
+	err  error
 }
 
 // New creates a new Client from an existing connection.
@@ -63,7 +72,8 @@ func New(conn net.Conn, opts ...Option) (*Client, error) {
 		options:        options,
 		tags:           newTagGenerator("A"),
 		pending:        newPendingCommands(),
-		continuationCh: make(chan string, 1),
+		continuationCh: make(chan continuation, 1),
+		disconnectCh:   make(chan struct{}),
 		state:          imap.ConnStateNotAuthenticated,
 	}
 
@@ -159,7 +169,9 @@ func (c *Client) Close() error {
 	c.closed = true
 	c.mu.Unlock()
 
-	return c.conn.Close()
+	err := c.conn.Close()
+	c.handleDisconnect(errors.New("connection closed"))
+	return err
 }
 
 // execute sends a command and waits for the tagged response.
@@ -202,14 +214,7 @@ func (c *Client) executeCheck(name string, args ...string) error {
 	if err != nil {
 		return err
 	}
-	if result.status != "OK" {
-		return &imap.IMAPError{StatusResponse: &imap.StatusResponse{
-			Type: imap.StatusResponseType(result.status),
-			Code: imap.ResponseCode(result.code),
-			Text: result.text,
-		}}
-	}
-	return nil
+	return commandResultError(result)
 }
 
 // collectUntagged returns and clears collected untagged data.
@@ -235,8 +240,73 @@ func (c *Client) handleContinuation(line string) {
 		text = line[2:]
 	}
 	select {
-	case c.continuationCh <- text:
+	case c.continuationCh <- continuation{text: text}:
 	default:
+	}
+}
+
+func (c *Client) handleDisconnect(err error) {
+	if err == nil {
+		err = errors.New("connection closed")
+	}
+
+	c.disconnectOnce.Do(func() {
+		c.mu.Lock()
+		c.disconnectErr = err
+		c.mu.Unlock()
+
+		c.pending.CompleteAll(fmt.Errorf("connection closed: %w", err))
+		select {
+		case c.continuationCh <- continuation{err: fmt.Errorf("connection closed: %w", err)}:
+		default:
+		}
+		close(c.disconnectCh)
+	})
+}
+
+// Done returns a channel that is closed when the client disconnects.
+func (c *Client) Done() <-chan struct{} {
+	return c.disconnectCh
+}
+
+// DisconnectErr returns the disconnect cause after Done is closed.
+func (c *Client) DisconnectErr() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.disconnectErr
+}
+
+func commandResultError(result *commandResult) error {
+	if result == nil {
+		return errors.New("missing command result")
+	}
+	if result.err != nil {
+		return result.err
+	}
+	if result.status == "OK" {
+		return nil
+	}
+	return &imap.IMAPError{StatusResponse: &imap.StatusResponse{
+		Type: imap.StatusResponseType(result.status),
+		Code: imap.ResponseCode(result.code),
+		Text: result.text,
+	}}
+}
+
+func (c *Client) waitForContinuation(cmd *pendingCommand) (string, error) {
+	for {
+		select {
+		case cont := <-c.continuationCh:
+			if cont.err != nil {
+				return "", cont.err
+			}
+			return cont.text, nil
+		case result := <-cmd.done:
+			if err := commandResultError(result); err != nil {
+				return "", err
+			}
+			return "", errors.New("missing continuation request")
+		}
 	}
 }
 

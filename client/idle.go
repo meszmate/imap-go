@@ -1,8 +1,6 @@
 package client
 
-import (
-	"strings"
-)
+import "strings"
 
 // IdleCommand represents an in-progress IDLE command.
 type IdleCommand struct {
@@ -27,7 +25,9 @@ func (c *Client) Idle() (*IdleCommand, error) {
 	}
 
 	// Wait for continuation request
-	<-c.continuationCh
+	if _, err := c.waitForContinuation(cmd); err != nil {
+		return nil, err
+	}
 
 	return &IdleCommand{
 		tag:    tag,
@@ -39,11 +39,8 @@ func (c *Client) Idle() (*IdleCommand, error) {
 // Wait blocks until the IDLE command completes or is stopped.
 func (ic *IdleCommand) Wait() error {
 	result := <-ic.cmd.done
-	if result.err != nil {
-		return result.err
-	}
-	if result.status != "OK" {
-		return &errString{msg: result.status + " " + result.text}
+	if err := commandResultError(result); err != nil {
+		return err
 	}
 	return nil
 }
@@ -55,12 +52,4 @@ func (ic *IdleCommand) Done() error {
 		return err
 	}
 	return ic.Wait()
-}
-
-type errString struct {
-	msg string
-}
-
-func (e *errString) Error() string {
-	return e.msg
 }

@@ -63,6 +63,53 @@ func main() {
 }
 ```
 
+### Client Lifecycle and Error Handling
+
+- `Close()` is safe to call multiple times.
+- If the connection is closed (local close, server disconnect, or EOF), pending commands fail promptly with an error instead of blocking.
+- Commands waiting for server continuation (`IDLE`, `APPEND`, SASL `AUTHENTICATE`) also fail promptly on disconnect.
+- `Logout()` sends `LOGOUT` and then closes the connection.
+- You can detect disconnection even when not using `IDLE` with:
+  - `c.Done()` channel (closed on disconnect)
+  - `c.DisconnectErr()` (disconnect cause after `Done` is closed)
+
+Example IDLE usage:
+
+```go
+idle, err := c.Idle()
+if err != nil {
+    log.Fatal(err)
+}
+
+done := make(chan error, 1)
+go func() { done <- idle.Wait() }()
+
+select {
+case err := <-done:
+    if err != nil {
+        log.Printf("IDLE ended with error: %v", err)
+    }
+case <-time.After(30 * time.Second):
+    // Stop IDLE after timeout.
+    if err := idle.Done(); err != nil {
+        log.Printf("IDLE stop failed: %v", err)
+    }
+}
+```
+
+Example non-IDLE disconnect detection:
+
+```go
+select {
+case <-c.Done():
+    log.Printf("connection ended: %v", c.DisconnectErr())
+case <-time.After(30 * time.Second):
+    if err := c.Noop(); err != nil {
+        log.Printf("NOOP failed: %v", err)
+    }
+}
+```
+
 ### Server
 
 ```go

@@ -642,7 +642,9 @@ func (c *Client) Append(mailbox string, flags []imap.Flag, literal []byte) (*ima
 	}
 
 	// Wait for continuation request
-	<-c.continuationCh
+	if _, err := c.waitForContinuation(cmd); err != nil {
+		return nil, err
+	}
 
 	// Send the literal data
 	_, err := c.conn.Write(literal)
@@ -655,15 +657,8 @@ func (c *Client) Append(mailbox string, flags []imap.Flag, literal []byte) (*ima
 	}
 
 	result := <-cmd.done
-	if result.err != nil {
-		return nil, result.err
-	}
-	if result.status != "OK" {
-		return nil, &imap.IMAPError{StatusResponse: &imap.StatusResponse{
-			Type: imap.StatusResponseType(result.status),
-			Code: imap.ResponseCode(result.code),
-			Text: result.text,
-		}}
+	if err := commandResultError(result); err != nil {
+		return nil, err
 	}
 
 	data := &imap.AppendData{}
